@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Four Possibilities — Statistical vs. Clinical Significance</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Calibri,'Segoe UI',system-ui,sans-serif;background:#F0F3F5;color:#333;padding:24px 16px;min-height:100vh;}
+  .wrap{max-width:720px;margin:0 auto;background:#fff;border-radius:12px;padding:32px 28px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+  h1{font-size:22px;font-weight:700;color:#172940;margin-bottom:6px;}
+  .subtitle{font-size:14px;color:#616467;margin-bottom:24px;line-height:1.5;}
+  .instructions{background:#E6F1FB;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#0C447C;line-height:1.6;}
+  .tog-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #e0e0e0;border-radius:8px;margin-bottom:10px;}
+  .tog-label{font-size:14px;color:#333;}
+  .tog{width:52px;height:28px;border-radius:14px;cursor:pointer;position:relative;transition:background 0.25s;flex-shrink:0;margin-left:12px;}
+  .tog-dot{width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:3px;transition:left 0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.15);}
+  .pills{display:flex;gap:6px;margin:16px 0 8px;}
+  .pill{font-size:12px;padding:4px 10px;border-radius:12px;font-weight:600;transition:all 0.25s;}
+  .grid{display:grid;grid-template-columns:auto 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:0;margin-bottom:16px;}
+  .col-head{text-align:center;padding:10px 0;font-size:14px;font-weight:700;color:#172940;}
+  .row-head{display:flex;align-items:center;justify-content:center;padding:0 14px 0 0;writing-mode:vertical-rl;transform:rotate(180deg);font-size:13px;font-weight:700;color:#172940;}
+  .quad{border:1px solid #e0e0e0;padding:24px 16px;text-align:center;transition:all 0.3s;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .quad-bar{width:100%;height:4px;border-radius:2px;margin-bottom:14px;transition:background 0.3s;}
+  .quad-title{font-size:17px;font-weight:700;margin-bottom:6px;transition:color 0.3s;}
+  .quad-sub{font-size:13px;transition:color 0.3s;}
+  .verdict{border-radius:8px;padding:16px 20px;margin-bottom:16px;font-size:14px;line-height:1.6;transition:all 0.3s;}
+  .presets{display:flex;gap:10px;margin-bottom:12px;}
+  .presets button{flex:1;font-size:12px;font-family:inherit;padding:10px 8px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#333;cursor:pointer;transition:background 0.15s,border-color 0.15s;}
+  .presets button:hover{background:#E6F1FB;border-color:#3D7FA9;}
+  .presets button:active{transform:scale(0.98);}
+  .footer{font-size:12px;color:#8B9098;text-align:center;margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The four possibilities</h1>
+  <p class="subtitle">Toggle the three questions a clinician should ask when reading a study's results.</p>
+
+  <div class="instructions">
+    <strong>How to use:</strong> Flip each toggle on or off to change the study's characteristics. Watch which quadrant lights up and read the clinical interpretation below. Use the preset buttons to load common scenarios — including the mock article from class.
+  </div>
+
+  <div class="tog-row">
+    <span class="tog-label">Is the result statistically significant? (p &lt; .05)</span>
+    <div class="tog" id="tog-p"><div class="tog-dot" id="tog-p-dot"></div></div>
+  </div>
+  <div class="tog-row">
+    <span class="tog-label">Is the effect size at least small? (d &ge; 0.20)</span>
+    <div class="tog" id="tog-d"><div class="tog-dot" id="tog-d-dot"></div></div>
+  </div>
+  <div class="tog-row">
+    <span class="tog-label">Does the mean difference exceed the clinical benchmark (MCID)?</span>
+    <div class="tog" id="tog-m"><div class="tog-dot" id="tog-m-dot"></div></div>
+  </div>
+
+  <div class="pills">
+    <span class="pill" id="pill-p"></span>
+    <span class="pill" id="pill-d"></span>
+    <span class="pill" id="pill-m"></span>
+  </div>
+
+  <div class="grid">
+    <div></div>
+    <div class="col-head">Clinically Important</div>
+    <div class="col-head">NOT Clinically Important</div>
+
+    <div class="row-head">Statistically Significant</div>
+    <div class="quad" id="q-goal">
+      <div class="quad-bar" id="q-goal-bar"></div>
+      <div class="quad-title" id="q-goal-t">THE GOAL</div>
+      <div class="quad-sub" id="q-goal-s">Real AND meaningful</div>
+    </div>
+    <div class="quad" id="q-beware">
+      <div class="quad-bar" id="q-beware-bar"></div>
+      <div class="quad-title" id="q-beware-t">BEWARE</div>
+      <div class="quad-sub" id="q-beware-s">Real but trivial (inflated by large n)</div>
+    </div>
+
+    <div class="row-head">NOT Statistically Significant</div>
+    <div class="quad" id="q-invest">
+      <div class="quad-bar" id="q-invest-bar"></div>
+      <div class="quad-title" id="q-invest-t">INVESTIGATE</div>
+      <div class="quad-sub" id="q-invest-s">Meaningful but underpowered study</div>
+    </div>
+    <div class="quad" id="q-discard">
+      <div class="quad-bar" id="q-discard-bar"></div>
+      <div class="quad-title" id="q-discard-t">DISCARD</div>
+      <div class="quad-sub" id="q-discard-s">Not real, not meaningful</div>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict"></div>
+
+  <div class="presets">
+    <button id="btn-mock">Mock article: TUG result</button>
+    <button id="btn-ideal">Ideal result</button>
+    <button id="btn-under">Underpowered study</button>
+    <button id="btn-nothing">Nothing there</button>
+  </div>
+
+  <div class="footer">ASHS 6400: Methods of Data Analysis &mdash; A.T. Still University</div>
+</div>
+
+<script>
+var state={p:true,d:true,m:false};
+
+var onBg='#1D9E75';
+var offBg='rgba(0,0,0,0.15)';
+
+var C={
+  goal:{bg:'#E6F1FB',bar:'#185FA5',t:'#0C447C',s:'#185FA5'},
+  beware:{bg:'#FCEBEB',bar:'#A32D2D',t:'#791F1F',s:'#A32D2D'},
+  invest:{bg:'#FAEEDA',bar:'#854F0B',t:'#633806',s:'#854F0B'},
+  discard:{bg:'#F1EFE8',bar:'#5F5E5A',t:'#444441',s:'#5F5E5A'}
+};
+var dim={bg:'rgba(0,0,0,0.01)',bar:'rgba(0,0,0,0.05)',t:'rgba(0,0,0,0.14)',s:'rgba(0,0,0,0.10)'};
+
+var pillOn={bg:'#E1F5EE',c:'#085041'};
+var pillOff={bg:'#FCEBEB',c:'#791F1F'};
+
+var V={
+  goal:'The ideal outcome. The result is statistically significant (p < .05), the effect size is meaningful (d \u2265 0.20), and the improvement exceeds the clinical benchmark. This treatment produces a real difference that patients would actually notice. Adopt it.',
+  beware:'The most dangerous quadrant for patient care. The p-value says the difference is real, and the effect size may look reasonable \u2014 but the improvement does not cross the clinical threshold patients would notice. A clinician might adopt this treatment based on the statistics alone, but it would not meaningfully help their patients.',
+  invest:'The improvement exceeds the clinical benchmark, suggesting the treatment could be meaningful \u2014 but the study did not reach statistical significance. This often means the study was underpowered (too few patients). A larger study is warranted before drawing conclusions.',
+  discard:'The result is neither statistically significant nor clinically meaningful. There is no convincing evidence the treatment works, and even if it did, the effect would be too small to matter for patients. Move on.'
+};
+var VC={
+  goal:{bg:'#E6F1FB',c:'#0C447C'},
+  beware:{bg:'#FCEBEB',c:'#791F1F'},
+  invest:{bg:'#FAEEDA',c:'#633806'},
+  discard:{bg:'#F1EFE8',c:'#444441'}
+};
+
+function setToggle(id,val){
+  var el=document.getElementById('tog-'+id);
+  var dot=document.getElementById('tog-'+id+'-dot');
+  if(val){el.style.background=onBg;dot.style.left='27px';}
+  else{el.style.background=offBg;dot.style.left='3px';}
+}
+
+function update(){
+  setToggle('p',state.p);
+  setToggle('d',state.d);
+  setToggle('m',state.m);
+
+  var pp=document.getElementById('pill-p');
+  var pd=document.getElementById('pill-d');
+  var pm=document.getElementById('pill-m');
+
+  if(state.p){pp.textContent='p < .05';pp.style.background=pillOn.bg;pp.style.color=pillOn.c;}
+  else{pp.textContent='p \u2265 .05';pp.style.background=pillOff.bg;pp.style.color=pillOff.c;}
+  if(state.d){pd.textContent='d \u2265 0.20';pd.style.background=pillOn.bg;pd.style.color=pillOn.c;}
+  else{pd.textContent='d < 0.20';pd.style.background=pillOff.bg;pd.style.color=pillOff.c;}
+  if(state.m){pm.textContent='Exceeds MCID';pm.style.background=pillOn.bg;pm.style.color=pillOn.c;}
+  else{pm.textContent='Below MCID';pm.style.background=pillOff.bg;pm.style.color=pillOff.c;}
+
+  var sig=state.p;
+  var clin=state.m;
+  var active='discard';
+  if(sig&&clin) active='goal';
+  else if(sig&&!clin) active='beware';
+  else if(!sig&&clin) active='invest';
+
+  var keys=['goal','beware','invest','discard'];
+  for(var i=0;i<keys.length;i++){
+    var k=keys[i];
+    var el=document.getElementById('q-'+k);
+    var bar=document.getElementById('q-'+k+'-bar');
+    var tt=document.getElementById('q-'+k+'-t');
+    var ss=document.getElementById('q-'+k+'-s');
+    if(k===active){
+      el.style.background=C[k].bg;bar.style.background=C[k].bar;
+      tt.style.color=C[k].t;ss.style.color=C[k].s;
+      el.style.transform='scale(1.03)';el.style.zIndex='1';
+    } else {
+      el.style.background=dim.bg;bar.style.background=dim.bar;
+      tt.style.color=dim.t;ss.style.color=dim.s;
+      el.style.transform='scale(1)';el.style.zIndex='0';
+    }
+  }
+
+  var vEl=document.getElementById('verdict');
+  vEl.textContent=V[active];
+  vEl.style.background=VC[active].bg;
+  vEl.style.color=VC[active].c;
+}
+
+document.getElementById('tog-p').addEventListener('click',function(){state.p=!state.p;update();});
+document.getElementById('tog-d').addEventListener('click',function(){state.d=!state.d;update();});
+document.getElementById('tog-m').addEventListener('click',function(){state.m=!state.m;update();});
+
+document.getElementById('btn-mock').addEventListener('click',function(){state.p=true;state.d=true;state.m=false;update();});
+document.getElementById('btn-ideal').addEventListener('click',function(){state.p=true;state.d=true;state.m=true;update();});
+document.getElementById('btn-under').addEventListener('click',function(){state.p=false;state.d=true;state.m=true;update();});
+document.getElementById('btn-nothing').addEventListener('click',function(){state.p=false;state.d=false;state.m=false;update();});
+
+update();
+</script>
+</body>
+</html>

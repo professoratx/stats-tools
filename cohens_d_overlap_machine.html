@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Effect Size Overlap Machine — What Does Cohen's d Look Like?</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Calibri,'Segoe UI',system-ui,sans-serif;background:#F0F3F5;color:#333;padding:24px 16px;min-height:100vh;}
+  .wrap{max-width:720px;margin:0 auto;background:#fff;border-radius:12px;padding:32px 28px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+  h1{font-size:22px;font-weight:700;color:#172940;margin-bottom:6px;}
+  .subtitle{font-size:14px;color:#616467;margin-bottom:24px;line-height:1.5;}
+  .instructions{background:#E6F1FB;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#0C447C;line-height:1.6;}
+  .ctrl-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .ctrl-label{font-size:14px;color:#616467;min-width:100px;}
+  .ctrl-num{width:64px;text-align:center;font-size:14px;font-family:inherit;padding:6px 8px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#333;}
+  input[type="range"]{flex:1;height:6px;cursor:pointer;}
+  canvas{width:100%;display:block;border-radius:10px;margin-top:8px;}
+  .bench{text-align:center;padding:14px 16px;border-radius:10px;margin:16px 0;font-size:15px;font-weight:600;transition:background 0.3s;}
+  .metric{background:#F0F3F5;border-radius:8px;padding:14px 16px;text-align:center;margin-bottom:16px;}
+  .metric-label{font-size:12px;color:#8B9098;margin-bottom:4px;}
+  .metric-val{font-size:24px;font-weight:600;color:#172940;}
+  .presets{display:flex;gap:12px;margin-bottom:12px;}
+  .presets button{flex:1;font-size:13px;font-family:inherit;padding:10px 12px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#333;cursor:pointer;transition:background 0.15s,border-color 0.15s;}
+  .presets button:hover{background:#E6F1FB;border-color:#3D7FA9;}
+  .presets button:active{transform:scale(0.98);}
+  .footer{font-size:12px;color:#8B9098;text-align:center;margin-top:8px;}
+  .legend{display:flex;justify-content:center;gap:24px;margin-bottom:16px;font-size:13px;color:#616467;}
+  .legend-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The effect size overlap machine</h1>
+  <p class="subtitle">What does Cohen's d actually look like? Slide to see how much two groups of patients overlap.</p>
+
+  <div class="instructions">
+    <strong>How to use:</strong> Drag the slider to change Cohen's d — the effect size in standard deviation units. Watch the treatment group (pink) separate from the control group (blue). The overlap percentage tells you how much the two groups still share in common. Use the preset buttons to jump to Cohen's benchmarks: small (0.20), medium (0.51 — our mock article), and large (0.80).
+  </div>
+
+  <div class="legend">
+    <span><span class="legend-dot" style="background:#378ADD;"></span>Control group</span>
+    <span><span class="legend-dot" style="background:#D4537E;"></span>Treatment group</span>
+    <span><span class="legend-dot" style="background:#7F77DD;"></span>Overlap</span>
+  </div>
+
+  <div class="ctrl-row">
+    <span class="ctrl-label">Cohen's d</span>
+    <input type="range" min="0" max="2" value="0.51" id="d-s" step="0.01" />
+    <input type="number" min="0" max="2" value="0.51" id="d-i" class="ctrl-num" step="0.01" />
+  </div>
+
+  <canvas id="cv"></canvas>
+
+  <div class="bench" id="bench"></div>
+
+  <div class="metric">
+    <div class="metric-label">Distribution overlap</div>
+    <div class="metric-val" id="o-ov">80%</div>
+  </div>
+
+  <div class="presets">
+    <button id="btn-sm">Small (d = 0.20)</button>
+    <button id="btn-mock">Mock article (d = 0.51)</button>
+    <button id="btn-lg">Large (d = 0.80)</button>
+  </div>
+
+  <div class="footer">ASHS 6400: Methods of Data Analysis &mdash; A.T. Still University</div>
+</div>
+
+<script>
+var cv=document.getElementById('cv'),cx=cv.getContext('2d');
+var dS=document.getElementById('d-s'),dI=document.getElementById('d-i');
+
+function rsz(){
+  var r=cv.parentElement.getBoundingClientRect();
+  var w=r.width,h=Math.min(300,w*0.46);
+  cv.width=w*2;cv.height=h*2;
+  cv.style.height=h+'px';
+  cx.setTransform(2,0,0,2,0,0);
+}
+rsz();
+window.addEventListener('resize',function(){rsz();draw();});
+
+function npdf(x,mu){var z=x-mu;return Math.exp(-0.5*z*z)/2.5066282746;}
+function ncdf(x){var t=1/(1+0.2316419*Math.abs(x));var d2=0.3989422802*Math.exp(-x*x/2);var p=d2*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-p:p;}
+
+function draw(){
+  var W=cv.width/2,H=cv.height/2;
+  cx.clearRect(0,0,W,H);
+  var d=parseFloat(dS.value)||0;
+  var mu1=0,mu2=d;
+
+  var padL=20,padR=20,padT=14,padB=40;
+  var gW=W-padL-padR,gH=H-padT-padB;
+  var xMin=mu1-3.5,xMax=mu2+3.5;
+  if(xMax-xMin<7){var mid=(xMin+xMax)/2;xMin=mid-3.5;xMax=mid+3.5;}
+
+  function xP(v){return padL+(v-xMin)/(xMax-xMin)*gW;}
+  function yP(v){return padT+gH-v/0.42*gH;}
+
+  var cFill='rgba(56,138,221,0.22)';
+  var tFill='rgba(212,83,126,0.22)';
+  var cStr='#378ADD';
+  var tStr='#D4537E';
+  var ovFill='rgba(127,119,221,0.18)';
+  var axC='rgba(0,0,0,0.12)';
+  var lbC='rgba(0,0,0,0.65)';
+
+  cx.strokeStyle=axC;cx.lineWidth=1;
+  cx.beginPath();cx.moveTo(padL,padT+gH);cx.lineTo(padL+gW,padT+gH);cx.stroke();
+
+  var steps=200,ddx=(xMax-xMin)/steps;
+
+  cx.beginPath();cx.moveTo(xP(xMin),yP(0));
+  for(var i=0;i<=steps;i++){var x=xMin+i*ddx;cx.lineTo(xP(x),yP(npdf(x,mu1)));}
+  cx.lineTo(xP(xMax),yP(0));cx.closePath();
+  cx.fillStyle=cFill;cx.fill();cx.strokeStyle=cStr;cx.lineWidth=2;cx.stroke();
+
+  cx.beginPath();cx.moveTo(xP(xMin),yP(0));
+  for(var i=0;i<=steps;i++){var x=xMin+i*ddx;cx.lineTo(xP(x),yP(npdf(x,mu2)));}
+  cx.lineTo(xP(xMax),yP(0));cx.closePath();
+  cx.fillStyle=tFill;cx.fill();cx.strokeStyle=tStr;cx.lineWidth=2;cx.stroke();
+
+  cx.beginPath();cx.moveTo(xP(xMin),yP(0));
+  for(var i=0;i<=steps;i++){var x=xMin+i*ddx;cx.lineTo(xP(x),yP(Math.min(npdf(x,mu1),npdf(x,mu2))));}
+  cx.lineTo(xP(xMax),yP(0));cx.closePath();
+  cx.fillStyle=ovFill;cx.fill();
+
+  cx.setLineDash([4,4]);cx.lineWidth=1.5;
+  cx.strokeStyle=cStr;cx.beginPath();cx.moveTo(xP(mu1),yP(0));cx.lineTo(xP(mu1),yP(npdf(0,0))+6);cx.stroke();
+  cx.strokeStyle=tStr;cx.beginPath();cx.moveTo(xP(mu2),yP(0));cx.lineTo(xP(mu2),yP(npdf(0,0))+6);cx.stroke();
+  cx.setLineDash([]);
+
+  if(d>0.12){
+    var arrY=yP(npdf(0,0)*0.5);
+    cx.strokeStyle=lbC;cx.lineWidth=1.5;
+    cx.beginPath();cx.moveTo(xP(mu1),arrY);cx.lineTo(xP(mu2),arrY);cx.stroke();
+    cx.beginPath();cx.moveTo(xP(mu2)-6,arrY-4);cx.lineTo(xP(mu2),arrY);cx.lineTo(xP(mu2)-6,arrY+4);cx.stroke();
+    cx.fillStyle=lbC;cx.font='600 12px Calibri, system-ui';cx.textAlign='center';
+    cx.fillText('d = '+d.toFixed(2)+' SD',(xP(mu1)+xP(mu2))/2,arrY-8);
+  }
+
+  cx.font='600 12px Calibri, system-ui';cx.textAlign='center';
+  cx.fillStyle=cStr;cx.fillText('Control',xP(mu1),padT+gH+18);
+  cx.fillStyle=tStr;cx.fillText('Treatment',xP(mu2),padT+gH+18);
+
+  if(d>=0.08&&d<1.8){
+    cx.fillStyle='rgba(127,119,221,0.55)';cx.font='11px Calibri, system-ui';
+    var ox=(xP(mu1)+xP(mu2))/2;
+    var midVal=npdf((mu1+mu2)/2,mu1);
+    var oy=yP(midVal*0.4);
+    if(oy>padT+gH-16)oy=padT+gH-16;
+    cx.fillText('overlap',ox,oy);
+  }
+
+  cx.font='11px Calibri, system-ui';cx.fillStyle='rgba(0,0,0,0.3)';cx.textAlign='right';
+  cx.fillText('Score \u2192',padL+gW,padT+gH+34);
+
+  var ov=2*ncdf(-Math.abs(d)/2);
+  document.getElementById('o-ov').textContent=Math.round(ov*100)+'%';
+
+  var bench=document.getElementById('bench');
+  var cat,bc,bg;
+  if(d<0.01){cat='No effect \u2014 the distributions are identical';bc='#616467';bg='#F0F3F5';}
+  else if(d<0.2){cat='Negligible effect (below small threshold)';bc='#616467';bg='#F0F3F5';}
+  else if(d<0.5){cat='Small effect (d = 0.20\u20130.49)';bc='#854F0B';bg='#FAEEDA';}
+  else if(d<0.8){cat='Medium effect (d = 0.50\u20130.79)';bc='#0C447C';bg='#E6F1FB';}
+  else{cat='Large effect (d \u2265 0.80)';bc='#085041';bg='#E1F5EE';}
+  bench.textContent=cat;bench.style.color=bc;bench.style.background=bg;
+}
+
+function sD(v){
+  v=Math.max(0,Math.min(2,parseFloat(v)||0));
+  dS.value=v;dI.value=v.toFixed(2);draw();
+}
+
+dS.addEventListener('input',function(){sD(dS.value);});
+dI.addEventListener('change',function(){sD(dI.value);});
+document.getElementById('btn-sm').addEventListener('click',function(){sD(0.20);});
+document.getElementById('btn-mock').addEventListener('click',function(){sD(0.51);});
+document.getElementById('btn-lg').addEventListener('click',function(){sD(0.80);});
+
+draw();
+</script>
+</body>
+</html>
