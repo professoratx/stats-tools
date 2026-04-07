@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,12 +10,12 @@
   body{font-family:Calibri,'Segoe UI',system-ui,sans-serif;background:#F0F3F5;color:#333;padding:24px 16px;min-height:100vh;}
   .wrap{max-width:680px;margin:0 auto;background:#fff;border-radius:12px;padding:36px 32px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
   h1{font-size:24px;font-weight:700;color:#172940;margin-bottom:4px;}
-  .sub{font-size:14px;color:#616467;margin-bottom:28px;}
-  .section{font-size:13px;font-weight:600;color:#8B9098;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;margin-top:28px;}
-  .section:first-of-type{margin-top:0;}
+  .sub{font-size:14px;color:#616467;margin-bottom:32px;line-height:1.5;}
+  .unit{margin-bottom:28px;}
+  .unit-header{font-size:16px;font-weight:700;padding:10px 16px;background:#172940;color:#fff;border-radius:8px;margin-bottom:14px;}
   .card{display:block;text-decoration:none;background:#FAFBFC;border:1px solid #E8E8E8;border-radius:10px;padding:16px 20px;margin-bottom:12px;transition:border-color 0.15s,box-shadow 0.15s;}
   .card:hover{border-color:#3D7FA9;box-shadow:0 2px 8px rgba(61,127,169,0.12);}
-  .card-title{font-size:16px;font-weight:600;color:#172940;margin-bottom:4px;}
+  .card-title{font-size:15px;font-weight:600;color:#172940;margin-bottom:4px;}
   .card-desc{font-size:13px;color:#616467;line-height:1.5;}
   .footer{font-size:12px;color:#8B9098;text-align:center;margin-top:28px;padding-top:16px;border-top:1px solid #E8E8E8;}
 </style>
@@ -24,46 +25,52 @@
   <h1>ASHS 6400: Interactive statistics tools</h1>
   <p class="sub">Methods of Data Analysis &bull; Arizona School of Health Sciences &bull; A.T. Still University</p>
 
-  <div class="section">Hypothesis testing</div>
+  <div class="unit">
+    <div class="unit-header">Descriptive statistics (Unit 2)</div>
 
-  <a class="card" href="t-critical-high-jump.html">
-    <div class="card-title">The t-test high jump</div>
-    <div class="card-desc">See how degrees of freedom change the t-critical value. The jumper is your t-statistic, the bar is t-critical — can you clear it?</div>
-  </a>
+    <a class="card" href="cohens_d_overlap_machine.html">
+      <div class="card-title">Effect size</div>
+      <div class="card-desc">Use this tool to explore how effect size (Cohen's d) captures the magnitude of a difference between groups in standard deviation units. Slide to see how much two groups of patients overlap.</div>
+    </a>
 
-  <a class="card" href="f-critical-high-jump.html">
-    <div class="card-title">The F-test high jump</div>
-    <div class="card-desc">Same high jump concept for ANOVA. Adjust the number of groups and total participants to see how F-critical changes.</div>
-  </a>
+    <a class="card" href="four_possibilities_interactive.html">
+      <div class="card-title">Balancing statistical significance and clinical meaningfulness</div>
+      <div class="card-desc">Use this tool to better understand how to balance between statistical significance (i.e., p-values, effect sizes) and clinical meaningfulness (i.e., clinical benchmarks, MCID).</div>
+    </a>
+  </div>
 
-  <div class="section">Confidence intervals</div>
+  <div class="unit">
+    <div class="unit-header">Comparing two groups or conditions (Unit 3)</div>
 
-  <a class="card" href="golden-egg-hunt.html">
-    <div class="card-title">The golden egg hunt</div>
-    <div class="card-desc">Cast a net (your 95% CI) across a football field to find the golden egg (the population mean). Bigger samples = narrower net.</div>
-  </a>
+    <a class="card" href="golden-egg-hunt.html">
+      <div class="card-title">What is a confidence interval?</div>
+      <div class="card-desc">Cast a net by adjusting the sample size and see if you can find the golden egg (i.e., the population mean). The 95% CI is your net — a larger sample gives you a narrower, more precise net.</div>
+    </a>
 
-  <a class="card" href="ci-includes-zero.html">
-    <div class="card-title">Does the CI include zero?</div>
-    <div class="card-desc">Adjust the mean difference, standard error, and sample size. Watch the CI change color as it crosses or avoids zero — and see the p-value flip.</div>
-  </a>
+    <a class="card" href="ci-two-group-overlap.html">
+      <div class="card-title">Interpreting confidence intervals between two groups</div>
+      <div class="card-desc">Use this tool to create confidence intervals for two groups. Then interpret the CIs in two ways: comparing the two CIs directly or creating a CI around the mean difference.</div>
+    </a>
 
-  <a class="card" href="ci-two-group-overlap.html">
-    <div class="card-title">CI overlap between two groups</div>
-    <div class="card-desc">Overlapping group CIs don't always mean "not significant." Compare individual CIs to the CI of the difference and see why.</div>
-  </a>
+    <a class="card" href="t-critical-high-jump.html">
+      <div class="card-title">The t-test high jump</div>
+      <div class="card-desc">See how degrees of freedom change the t-critical value. The jumper is your t-statistic, the bar is t-critical — can you clear it?</div>
+    </a>
+  </div>
 
-  <div class="section">Effect size and clinical significance</div>
+  <div class="unit">
+    <div class="unit-header">Comparing three or more groups or conditions (Unit 4)</div>
 
-  <a class="card" href="cohens_d_overlap_machine.html">
-    <div class="card-title">The effect size overlap machine</div>
-    <div class="card-desc">What does Cohen's d actually look like? Slide to see how much two groups of patients overlap at different effect sizes — from negligible to large.</div>
-  </a>
+    <a class="card" href="test-selection-flowchart.html">
+      <div class="card-title">Selecting the correct significance test</div>
+      <div class="card-desc">Answer two questions — how many groups and how many conditions — and the interactive flowchart guides you to the correct statistical test.</div>
+    </a>
 
-  <a class="card" href="four_possibilities_interactive.html">
-    <div class="card-title">The four possibilities</div>
-    <div class="card-desc">Toggle statistical significance, effect size, and the MCID on and off. Watch which quadrant lights up — and learn which combination is most dangerous for patient care.</div>
-  </a>
+    <a class="card" href="bonferroni-limbo.html">
+      <div class="card-title">The multiple comparison issue</div>
+      <div class="card-desc">Each stick figure's height represents a p-value. The limbo bar is the Bonferroni-adjusted alpha. Watch what happens as you add more groups — the bar drops and fewer comparisons survive.</div>
+    </a>
+  </div>
 
   <div class="footer">Created for ASHS 6400: Methods of Data Analysis &bull; A.T. Still University</div>
 </div>
