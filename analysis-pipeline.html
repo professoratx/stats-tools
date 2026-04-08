@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Putting the Pieces Together: The Analysis Pipeline</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#172940;--steel:#3D7FA9;--red:#C0504D;--gray:#616467;--muted:#8B9098;--cream:#F0F3F5;--white:#FFFFFF;--info-bg:#E6F1FB;--info-text:#0C447C;--warn-bg:#FCEBEB;--warn-text:#791F1F;--green:#1D9E75;--ok-bg:#E8F5E9;--ok-text:#2E7D32;--no-bg:#FFEBEE;--no-text:#C62828}
+body{font-family:Calibri,'Segoe UI',Tahoma,sans-serif;background:var(--cream);color:var(--gray);line-height:1.55;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+.mc{background:var(--white);border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:32px 28px;max-width:860px;width:100%;margin-bottom:16px}
+h1{font-size:26px;font-weight:700;color:var(--navy);text-align:center;margin-bottom:4px}
+.sub{text-align:center;color:var(--muted);font-size:15px;margin-bottom:24px}
+h2{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:12px}
+h3{font-size:17px;font-weight:700;color:var(--steel);margin-bottom:8px}
+.ib{background:var(--info-bg);color:var(--info-text);border-radius:8px;padding:14px 18px;font-size:14px;line-height:1.55;margin-bottom:16px}
+.wb{background:var(--warn-bg);color:var(--warn-text);border-radius:8px;padding:14px 18px;font-size:14px;line-height:1.55;margin-bottom:16px}
+.cb{background:var(--navy);color:var(--white);border-radius:8px;padding:14px 18px;font-size:14px;line-height:1.55;margin-bottom:16px;text-align:center}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.sb{background:var(--white);border:2px solid #ddd;border-radius:10px;padding:16px 18px;cursor:pointer;text-align:left;transition:all .2s;font-family:inherit}
+.sb:hover{border-color:var(--steel);background:var(--cream)}
+.sb.active{border-color:var(--steel);background:var(--info-bg);box-shadow:0 0 0 2px rgba(61,127,169,.2)}
+.sn{font-size:11px;font-weight:700;color:var(--steel);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.st{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.sd{font-size:13px;color:var(--muted)}
+.bar{display:flex;gap:0;margin-bottom:24px;border-radius:8px;overflow:hidden;border:1px solid #ddd}
+.si{flex:1;padding:10px 6px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);background:var(--cream);transition:all .3s;border-right:1px solid #ddd}
+.si:last-child{border-right:none}.si.a{background:var(--steel);color:var(--white)}.si.d{background:var(--green);color:var(--white)}.si.l{opacity:.45}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.snm{width:32px;height:32px;border-radius:50%;background:var(--steel);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.qb{margin-bottom:18px}.ql{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:10px}
+.qo{display:flex;flex-direction:column;gap:8px}
+.qp{display:block;width:100%;padding:12px 16px;border:2px solid #ddd;border-radius:8px;background:var(--white);font-family:inherit;font-size:14px;color:var(--navy);text-align:left;cursor:pointer;transition:all .15s;font-weight:500}
+.qp:hover:not(.lk){border-color:var(--steel);background:var(--cream)}
+.qp.ok{border-color:var(--green);background:var(--ok-bg);color:var(--ok-text);cursor:default}
+.qp.no{border-color:var(--red);background:var(--no-bg);color:var(--no-text);cursor:default}
+.qp.lk{opacity:.4;cursor:default}
+.qp.sk{border-color:var(--green);background:var(--ok-bg);color:var(--ok-text);opacity:.7;cursor:default}
+.fb{margin-top:8px;padding:12px 16px;border-radius:8px;font-size:14px;line-height:1.5;display:none}
+.fb.fc{display:block;background:var(--ok-bg);color:var(--ok-text)}.fb.fi{display:block;background:var(--no-bg);color:var(--no-text)}
+.dt{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:14px}
+.dt th{background:var(--steel);color:var(--white);padding:10px 14px;text-align:center;font-weight:700;font-size:13px}
+.dt td{padding:9px 14px;text-align:center;border-bottom:1px solid #e8e8e8}
+.dt tr:nth-child(even) td{background:var(--cream)}.dt tr:nth-child(odd) td{background:var(--white)}
+.rc{background:var(--cream);border-radius:8px;padding:16px 20px;margin-bottom:14px;border-left:4px solid var(--steel)}
+.rl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.rs{font-size:18px;font-weight:700;color:var(--navy);font-style:italic;margin-bottom:3px}
+.ri{font-size:14px;color:var(--gray)}
+.pt{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:13px}
+.pt th{background:var(--navy);color:var(--white);padding:10px 10px;text-align:center;font-weight:700;font-size:12px}
+.pt td{padding:9px 10px;text-align:center;border-bottom:1px solid #e8e8e8}
+.pt tr:nth-child(even) td{background:var(--cream)}.pt tr:nth-child(odd) td{background:var(--white)}
+.ps{color:var(--green);font-weight:700}.pn{color:var(--red);font-weight:700}
+.fx{background:var(--cream);border-radius:8px;padding:16px 20px;text-align:center;margin:12px 0;font-size:16px;color:var(--navy);font-weight:600}
+.fb2{font-size:22px;margin:6px 0}.fs{font-size:12px;color:var(--muted);font-weight:400}
+.btn{display:inline-block;padding:10px 24px;border:1px solid #ccc;border-radius:8px;background:var(--white);color:var(--navy);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:hover{background:var(--cream);border-color:var(--steel)}
+.bp{background:var(--steel);color:var(--white);border-color:var(--steel)}.bp:hover{background:#336d94}
+.bc{display:flex;justify-content:center;gap:12px;margin:16px 0}
+.hd{display:none}.fi2{animation:fi .4s ease}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.col{opacity:.35;pointer-events:none;max-height:180px;overflow:hidden;position:relative;margin-bottom:12px;transition:opacity .3s}
+.col::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,var(--white))}
+.dv{border:none;border-top:2px solid var(--cream);margin:20px 0}
+.nl{color:var(--steel);font-weight:600;text-decoration:none;border-bottom:1px dashed var(--steel)}
+.ft{text-align:center;color:var(--muted);font-size:12px;padding:12px 0 4px 0}
+.gv{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;padding:20px 16px;background:var(--cream);border-radius:10px;margin-bottom:16px}
+.gc{text-align:center;min-width:80px}.gi{font-size:20px;line-height:1.2}
+.gl{font-size:12px;font-weight:700;color:var(--navy);max-width:90px;margin:0 auto}
+.gn{animation:pi .5s ease}
+@keyframes pi{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.gp{width:100%;text-align:center;font-size:12px;color:var(--muted);margin-top:6px}
+@media(max-width:600px){.sg{grid-template-columns:1fr}.mc{padding:20px 16px}h1{font-size:22px}.si{font-size:10px;padding:8px 3px}.gv{gap:14px}}
+</style>
+</head>
+<body>
+<div class="mc">
+<h1>Putting the Pieces Together</h1>
+<p class="sub">The Analysis Pipeline</p>
+<div class="ib"><strong>How to use this tool:</strong> Select a clinical scenario below. You'll work through the complete analysis pipeline — answering questions at each step to determine the appropriate statistical test, interpret results, and decide what comes next. You must answer each question correctly before moving forward.</div>
+<h2>Choose a Scenario</h2>
+<div class="sg">
+<button class="sb" onclick="load(0)" id="sb0"><div class="sn">Scenario 1</div><div class="st">Cochlear Implant Programming</div><div class="sd">Comparing speech perception across CI programming algorithms</div></button>
+<button class="sb" onclick="load(1)" id="sb1"><div class="sn">Scenario 2</div><div class="st">Hearing Aid Noise Reduction</div><div class="sd">Testing noise reduction settings on speech-in-noise performance</div></button>
+<button class="sb" onclick="load(2)" id="sb2"><div class="sn">Scenario 3</div><div class="st">Hand Therapy Protocols</div><div class="sd">Comparing therapy approaches after tendon repair</div></button>
+<button class="sb" onclick="load(3)" id="sb3"><div class="sn">Scenario 4</div><div class="st">Balance Confidence Recovery</div><div class="sd">Tracking balance confidence over time after hip fracture</div></button>
+</div>
+<div id="pipe" class="hd">
+<div class="bar" id="sbar"></div>
+<div id="s1"></div><div id="s2"></div><div id="s3"></div><div id="s4"></div>
+</div>
+</div>
+<div class="ft">ASHS 6400: Methods of Data Analysis &bull; A.T. Still University</div>
+
+<script>
+// ======================== DATA ========================
+const D=[
+// S0: AuD Indep 2→4 ANOVA SIG — Two CIs (no overlap = sig)
+{title:"Cochlear Implant Programming Algorithms",
+desc2:"An audiology clinic wants to determine which cochlear implant programming algorithm produces better speech perception outcomes. Sixty adults with cochlear implants are randomly assigned to one of two programming algorithms (30 patients per group). Speech perception is measured using AzBio sentence scores (% correct) at 6 months post-activation.",
+outcome:"AzBio Sentence Score (% correct)",
+g2:[{name:"Algorithm A",n:30,mean:72.4,sd:11.2},{name:"Algorithm B",n:30,mean:63.1,sd:12.8}],
+q1a:"multiple",q1ok:"Correct! There are multiple groups — two separate groups of patients, each assigned to a different algorithm.",q1no:"Not quite. Patients are <em>randomly assigned to one of two algorithms</em>. That means there are multiple groups.",
+ind:true,n1:2,gl:"groups",
+q2o:["2","3","4"],q2a:"2",q2ok:"Correct! There are 2 groups — Algorithm A and Algorithm B.",q2no:"Not quite. Count the groups: Algorithm A and Algorithm B. That's 2.",
+q3a:"ind_t",q3ok:"Correct! With two independent groups, the appropriate test is the independent-samples t-test.",
+q3no:{dep_t:"Not quite. A dependent-samples t-test is for the <em>same</em> patients tested twice. Here, different patients are in each group.",anova:"Not quite. A one-way ANOVA is for <em>three or more</em> independent groups. With two groups, use the independent-samples t-test.",rm:"Not quite. A repeated measures ANOVA is for the same patients across three or more conditions. Here, we have two separate groups."},
+tLbl:"Independent-samples t-test",
+tR:{df:58,t:2.96,p:.004,md:9.3,sig:true},
+// CI TYPE: Two individual CIs (no overlap = significant)
+ciType:"two",
+ci1:{lo:68.3,hi:76.5,mean:72.4,label:"Algorithm A"},
+ci2:{lo:58.3,hi:67.9,mean:63.1,label:"Algorithm B"},
+ciDesc:"Two 95% Confidence Intervals",
+ciExplain:"Each bar represents the 95% CI around that group's mean. If the two intervals do <strong>not overlap</strong>, the groups are significantly different.",
+tInterp:"The two confidence intervals do not overlap, and the t-test confirms the difference is significant (p = .004). Patients receiving Algorithm A scored significantly higher on speech perception than those receiving Algorithm B.",
+// Step 2 interpretation Q — correct in position 3
+s2qL:"Based on the t-test result and the two confidence intervals, what is the most appropriate interpretation?",
+s2q:[{v:"nonsig",l:"The groups do not differ significantly — the p-value is too large to draw conclusions."},{v:"cant_tell",l:"We cannot determine significance from a t-test alone — we need an ANOVA."},{v:"sig_ci",l:"The groups differ significantly — the p-value is below .05 and the CIs do not overlap."},{v:"sig_noci",l:"The groups differ significantly, but the CIs overlap, so we should be cautious."}],
+s2a:"sig_ci",
+s2ok:"Correct! The p-value (.004) is well below .05, and the two 95% CIs do not overlap — both indicators confirm the groups differ significantly.",
+s2no:{nonsig:"Not quite. The p-value is .004, which is less than .05 — this result <em>is</em> statistically significant.",sig_noci:"Not quite. Look at the CI visualization: Algorithm A's interval (68.3–76.5) and Algorithm B's interval (58.3–67.9) do <em>not</em> overlap.",cant_tell:"Not quite. A t-test is the appropriate test for two groups, and we can determine significance. The p-value is .004 — is that less than .05?"},
+// df Q: "Based on df=58, how many total patients?"
+dfqL:"The t-test reports t(58). Based on the degrees of freedom, how many total patients are in this study?",
+dfq:[{v:"58",l:"58 patients"},{v:"60",l:"60 patients"},{v:"59",l:"59 patients"},{v:"30",l:"30 patients"}],
+dfa:"60",dfok:"Correct! For an independent-samples t-test, df = N − 2. So 58 + 2 = 60 total patients (30 per group).",
+dfno:"Not quite. For an independent-samples t-test, the degrees of freedom = total patients − 2. If df = 58, then total patients = 58 + 2 = 60.",
+// Critical value Q (sig result → t exceeds critical)
+cvqL:"The t-test is significant (p = .004). Based on this, what would you expect about the relationship between the t-statistic (2.96) and the critical t-value?",
+cvq:[{v:"less",l:"The t-statistic (2.96) is less than the critical t-value."},{v:"greater",l:"The t-statistic (2.96) is greater than the critical t-value."},{v:"equal",l:"The t-statistic and critical value are equal when the result is significant."}],
+cva:"greater",cvok:"Correct! When a result is significant, the calculated t-statistic exceeds the critical t-value — think of the high-jump metaphor: the t-statistic 'cleared the bar.'",
+cvno:"Not quite. For a result to be significant, the calculated t-statistic must <em>exceed</em> (be greater than) the critical t-value. Think of the high-jump metaphor from class — the t-statistic has to clear the bar.",
+// Phase 2
+desc3:"The clinic now wants to include two additional algorithms. Sixty more patients are recruited and assigned to Algorithm C and Algorithm D (30 per group), bringing the total to 120 patients across four groups.",
+g3:[{name:"Algorithm A",n:30,mean:72.4,sd:11.2},{name:"Algorithm B",n:30,mean:63.1,sd:12.8},{name:"Algorithm C",n:30,mean:68.8,sd:10.5},{name:"Algorithm D",n:30,mean:66.2,sd:11.9}],
+n2:4,pl:"groups",vizT:"independent",
+vizI:["🔵","🔴","🟢","🟡"],vizL:["Algorithm A","Algorithm B","Algorithm C","Algorithm D"],
+q3bA:"anova",q3bok:"Correct! With four independent groups, the appropriate test is a one-way ANOVA.",
+q3bno:{ind_t:"Not quite. An independent-samples t-test only compares two groups. With four groups, we need a one-way ANOVA.",dep_t:"Not quite. A dependent-samples t-test is for one group measured twice. Here we have four separate groups.",rm:"Not quite. A repeated measures ANOVA is for the same patients across conditions. These are four separate groups — use a one-way ANOVA."},
+omLbl:"One-way ANOVA",
+om:{dfB:3,dfW:116,F:3.52,p:.008,eta2:.08,sig:true},
+omInterp:"The one-way ANOVA is significant — at least one group differs from the others. But the F-test doesn't tell us <em>which</em> groups differ. With four groups, there are six possible pairwise comparisons.",
+// S4 interp Q — correct pos 2
+s4iqL:"Based on the F-test result, what is the most appropriate interpretation?",
+s4iq:[{v:"nonsig",l:"The result is not significant — there is no evidence of differences among the groups."},{v:"sig_which",l:"The result is significant — at least one group differs, but we don't yet know which ones."},{v:"sig_all",l:"The result is significant — all four groups differ from each other."},{v:"sig_best",l:"The result is significant — the group with the highest mean is the best."}],
+s4ia:"sig_which",
+s4iok:"Correct! The p-value (.008) is below .05, so the result is significant. The F-test tells us at least one group differs, but it does <em>not</em> tell us which — that requires post-hoc comparisons.",
+s4ino:{nonsig:"Not quite. The p-value .008 is less than .05 — this <em>is</em> significant.",sig_all:"Not quite. A significant ANOVA means at least one group differs, not that all differ. Post-hoc tests identify the specific pairs.",sig_best:"Not quite. The F-test only tells us at least one group differs — it doesn't identify which is 'best.'"},
+// S4 df Q: "Based on F(3,116), how many groups?"
+s4dfL:"The ANOVA reports F(3, 116). Based on the first degrees of freedom value, how many groups were in this study?",
+s4df:[{v:"3",l:"3 groups"},{v:"4",l:"4 groups"},{v:"116",l:"116 groups"},{v:"120",l:"120 groups"}],
+s4da:"4",s4dok:"Correct! The first df value = k − 1, where k is the number of groups. So 3 + 1 = 4 groups.",
+s4dno:"Not quite. For a one-way ANOVA, df between groups = k − 1. If df = 3, then k = 3 + 1 = 4 groups.",
+// S4 critical value Q (sig → F exceeds critical)
+s4cvL:"The ANOVA is significant (p = .008). Based on this, what would you expect about the relationship between the F-statistic (3.52) and the critical F-value?",
+s4cv:[{v:"greater",l:"The F-statistic (3.52) is greater than the critical F-value."},{v:"less",l:"The F-statistic (3.52) is less than the critical F-value."},{v:"unrelated",l:"The F-statistic and critical value are unrelated to significance."}],
+s4ca:"greater",s4cok:"Correct! When the ANOVA is significant, the F-statistic exceeds the critical F-value — just like the high-jump metaphor, but now for the F-test.",
+s4cno:"Not quite. For any result to be significant, the calculated statistic must exceed the critical value. The F-statistic 'cleared the bar.'",
+// Post-hoc
+phNeed:true,phOk:"Correct! The ANOVA is significant, so post-hoc comparisons are needed.",phNo:"Not quite. The ANOVA is significant (p < .05), so post-hoc comparisons are needed to find which groups differ.",
+nComp:6,bAlpha:.0083,
+ncO:["3","4","6","10"],ncA:"6",ncOk:"Correct! With 4 groups: k(k−1)/2 = 4(3)/2 = 6 comparisons.",ncNo:"Not quite. Use k(k−1)/2. With 4 groups: 4(3)/2 = 6.",
+bO:["0.0167","0.0125","0.0083","0.0050"],bA:"0.0083",bOk:"Correct! 0.05 ÷ 6 = 0.0083.",bNo:"Not quite. 0.05 ÷ 6 = 0.0083.",
+phT:"independent-samples t-tests",
+ph:[{pair:"Algorithm A vs. B",diff:9.3,t:2.96,df:58,p:.004,sig:true},{pair:"Algorithm A vs. C",diff:3.6,t:1.28,df:58,p:.206,sig:false},{pair:"Algorithm A vs. D",diff:6.2,t:2.08,df:58,p:.042,sig:false},{pair:"Algorithm B vs. C",diff:-5.7,t:-1.91,df:58,p:.061,sig:false},{pair:"Algorithm B vs. D",diff:-3.1,t:-1.02,df:58,p:.312,sig:false},{pair:"Algorithm C vs. D",diff:2.6,t:0.92,df:58,p:.361,sig:false}],
+phI:"Only Algorithm A vs. B is significant after Bonferroni correction (p = .004 < .0083). Notice A vs. D had p = .042 — significant at α = .05, but not after Bonferroni adjustment. With six comparisons, the bar is higher."},
+
+// S1: AuD Dep 2→4 RMANOVA NOT SIG — CI of mean diff (crosses zero = not sig)
+{title:"Hearing Aid Noise Reduction Settings",
+desc2:"An audiologist wants to know whether a hearing aid's noise reduction feature improves speech-in-noise performance. Twenty-eight adults with moderate sensorineural hearing loss each complete a speech-in-noise test (QuickSIN) under two conditions: noise reduction off and noise reduction on. Lower scores indicate better performance.",
+outcome:"QuickSIN Score (dB SNR loss)",
+g2:[{name:"NR Off",n:28,mean:5.8,sd:2.4},{name:"NR On",n:28,mean:4.6,sd:2.2}],
+q1a:"one",q1ok:"Correct! One group — the same 28 patients tested under both conditions.",q1no:"Not quite. The same 28 patients complete the test under <em>both</em> conditions. That's one group tested twice.",
+ind:false,n1:2,gl:"conditions",
+q2o:["2","3","4"],q2a:"2",q2ok:"Correct! 2 conditions — NR Off and NR On.",q2no:"Not quite. NR Off and NR On = 2 conditions.",
+q3a:"dep_t",q3ok:"Correct! One group across two conditions → dependent-samples t-test.",
+q3no:{ind_t:"Not quite. An independent-samples t-test is for two <em>separate</em> groups. Same patients here → dependent-samples t-test.",anova:"Not quite. One-way ANOVA is for three or more independent groups.",rm:"Not quite. RMANOVA is for three or more conditions. With two, use the dependent-samples t-test."},
+tLbl:"Dependent-samples t-test",
+tR:{df:27,t:1.52,p:.140,md:1.2,sig:false},
+ciType:"diff",
+ciDiff:{lo:-0.4,hi:2.8,md:1.2},
+ciDesc:"95% CI of the Mean Difference",
+ciExplain:"This interval estimates the true difference between conditions. If it <strong>includes zero</strong> (crosses the dashed line), we cannot be confident a real difference exists.",
+tInterp:"The noise reduction feature did not produce a statistically significant improvement. The p-value (.140) is above .05, and the 95% CI crosses zero (−0.4 to 2.8), meaning the true difference could be zero.",
+// S2 interp Q — correct pos 4
+s2qL:"Based on the t-test result and the 95% CI of the mean difference, what is the most appropriate interpretation?",
+s2q:[{v:"sig_mean",l:"The conditions differ significantly — the NR On group had a lower (better) mean score."},{v:"nonsig_small",l:"The result is not significant only because the mean difference (1.2) is too small."},{v:"sig_ci",l:"The conditions differ significantly because the CI does not include zero."},{v:"nonsig_ci",l:"The conditions do not differ significantly — the p-value is above .05 and the CI includes zero."}],
+s2a:"nonsig_ci",
+s2ok:"Correct! The p-value (.140) is above .05, and the CI (−0.4 to 2.8) includes zero — no significant difference.",
+s2no:{sig_mean:"Not quite. A difference in means doesn't mean significance. The p-value (.140) is above .05.",nonsig_small:"Not quite. Significance depends on variability and sample size, not just the raw difference. p = .140 is above .05.",sig_ci:"Not quite. The CI ranges from −0.4 to 2.8 — it <em>does</em> include zero."},
+// df Q: "Based on df=27, how many patients?"
+dfqL:"The t-test reports t(27). For a dependent-samples t-test, df = n − 1. How many patients were in this study?",
+dfq:[{v:"27",l:"27 patients"},{v:"28",l:"28 patients"},{v:"26",l:"26 patients"},{v:"54",l:"54 patients"}],
+dfa:"28",dfok:"Correct! For a dependent-samples t-test, df = n − 1. So 27 + 1 = 28 patients.",
+dfno:"Not quite. For a dependent-samples t-test, df = n − 1. If df = 27, then n = 28 patients.",
+// Critical value Q (not sig → t does NOT exceed critical)
+cvqL:"The t-test is not significant (p = .140). Based on this, what would you expect about the relationship between the t-statistic (1.52) and the critical t-value?",
+cvq:[{v:"greater",l:"The t-statistic (1.52) is greater than the critical t-value."},{v:"equal",l:"The t-statistic equals the critical value when p > .05."},{v:"less",l:"The t-statistic (1.52) is less than the critical t-value."}],
+cva:"less",cvok:"Correct! The t-statistic did not exceed the critical value — in the high-jump metaphor, it didn't clear the bar. That's why the result is not significant.",
+cvno:"Not quite. When a result is <em>not</em> significant, it means the t-statistic did <em>not</em> exceed the critical value — it failed to clear the bar.",
+// Phase 2
+desc3:"The audiologist now wants to compare four noise reduction settings: Off, Low, Medium, and High. The same 28 patients complete the test under all four conditions (order counterbalanced).",
+g3:[{name:"NR Off",n:28,mean:5.8,sd:2.4},{name:"NR Low",n:28,mean:4.6,sd:2.2},{name:"NR Medium",n:28,mean:5.1,sd:2.5},{name:"NR High",n:28,mean:5.3,sd:2.6}],
+n2:4,pl:"conditions",vizT:"dependent",
+vizC:["#AED6F1","#5DADE2","#2E86C1","#1B4F72"],vizL:["NR Off","NR Low","NR Medium","NR High"],
+q3bA:"rm",q3bok:"Correct! Same patients across four conditions → repeated measures ANOVA.",
+q3bno:{ind_t:"Not quite. Same patients across conditions — need RMANOVA.",dep_t:"Not quite. Dependent t-test is for two conditions only. Four conditions → RMANOVA.",anova:"Not quite. Same patients = not independent groups. Need <em>repeated measures</em> ANOVA."},
+omLbl:"Repeated measures ANOVA",
+om:{dfB:3,dfW:81,F:1.84,p:.146,eta2:.06,sig:false},
+omInterp:"The RMANOVA is <strong>not significant</strong> (p = .146). There is no evidence that speech-in-noise performance differs across the four noise reduction settings.",
+// S4 interp Q — correct pos 2
+s4iqL:"Based on the F-test result, what is the most appropriate interpretation?",
+s4iq:[{v:"nonsig_eta",l:"The result is not significant, but η² = .06 suggests a trend worth exploring with post-hoc tests."},{v:"nonsig_stop",l:"The result is not significant — there is no evidence that performance differs across the four conditions."},{v:"sig_which",l:"The result is significant — at least one condition differs."},{v:"wrong_test",l:"The result cannot be interpreted because a one-way ANOVA should have been used."}],
+s4ia:"nonsig_stop",
+s4iok:"Correct! p = .146 is above .05 — not significant. No evidence of differences across the four settings.",
+s4ino:{nonsig_eta:"Not quite. Post-hoc tests should <em>not</em> follow a non-significant omnibus result, regardless of effect size.",sig_which:"Not quite. p = .146 is <em>above</em> .05 — not significant.",wrong_test:"Not quite. Same patients across conditions = RMANOVA is correct. The issue is the result, not the test."},
+// S4 df Q
+s4dfL:"The RMANOVA reports F(3, 81). The first df value = k − 1. How many conditions were tested?",
+s4df:[{v:"81",l:"81 conditions"},{v:"3",l:"3 conditions"},{v:"4",l:"4 conditions"},{v:"28",l:"28 conditions"}],
+s4da:"4",s4dok:"Correct! df between = k − 1 = 3, so k = 4 conditions.",
+s4dno:"Not quite. df between = k − 1. If df = 3, then k = 3 + 1 = 4 conditions.",
+// S4 critical value Q (not sig)
+s4cvL:"The RMANOVA is not significant (p = .146). What would you expect about the F-statistic (1.84) and the critical F-value?",
+s4cv:[{v:"greater",l:"The F-statistic (1.84) is greater than the critical F-value."},{v:"less",l:"The F-statistic (1.84) is less than the critical F-value."},{v:"unrelated",l:"The F-statistic and critical value are unrelated to significance."}],
+s4ca:"less",s4cok:"Correct! The F-statistic did not exceed the critical value — it didn't clear the bar, so the result is not significant.",
+s4cno:"Not quite. When a result is not significant, the F-statistic did <em>not</em> exceed the critical value.",
+phNeed:false,phOk:"Correct! The RMANOVA is not significant — no post-hoc comparisons.",phNo:"Not quite. The RMANOVA is not significant (p = .146). Post-hoc tests after a non-significant omnibus are not appropriate.",
+nComp:6,bAlpha:.0083,ncO:[],bO:[],phT:"",ph:[],phI:""},
+
+// S2: OT Indep 2→4 ANOVA NOT SIG — Two CIs (overlap = not sig)
+{title:"Hand Therapy Protocols After Flexor Tendon Repair",
+desc2:"An occupational therapist wants to compare two hand therapy protocols following Zone II flexor tendon repair. Sixty patients are randomly assigned to one of two protocols (30 per group): Early Active Motion or Immobilization. Grip strength (kg) is measured at 12 weeks post-surgery.",
+outcome:"Grip Strength (kg)",
+g2:[{name:"Early Active",n:30,mean:28.6,sd:9.4},{name:"Immobilization",n:30,mean:25.4,sd:8.1}],
+q1a:"multiple",q1ok:"Correct! Multiple groups — two separate groups of patients.",q1no:"Not quite. Patients are <em>randomly assigned</em> to one of two protocols — that's multiple groups.",
+ind:true,n1:2,gl:"groups",
+q2o:["2","3","4"],q2a:"2",q2ok:"Correct! 2 groups — Early Active and Immobilization.",q2no:"Not quite. Two protocols = 2 groups.",
+q3a:"ind_t",q3ok:"Correct! Two independent groups → independent-samples t-test.",
+q3no:{dep_t:"Not quite. Different patients in each group → independent-samples t-test, not dependent.",anova:"Not quite. ANOVA is for three or more groups. Two groups → independent-samples t-test.",rm:"Not quite. Different patients, not repeated measures. Use independent-samples t-test."},
+tLbl:"Independent-samples t-test",
+tR:{df:58,t:1.64,p:.107,md:3.2,sig:false},
+ciType:"two",
+ci1:{lo:25.2,hi:32.0,mean:28.6,label:"Early Active"},
+ci2:{lo:22.4,hi:28.4,mean:25.4,label:"Immobilization"},
+ciDesc:"Two 95% Confidence Intervals",
+ciExplain:"Each bar represents the 95% CI around that group's mean. If the intervals <strong>overlap</strong>, we cannot be confident the groups are truly different.",
+tInterp:"The two confidence intervals overlap (Early Active: 25.2–32.0; Immobilization: 22.4–28.4), and the t-test confirms the difference is not significant (p = .107). We cannot be confident the protocols produce different grip strength outcomes.",
+// S2 interp Q — correct pos 2
+s2qL:"Based on the t-test result and the two confidence intervals, what is the most appropriate interpretation?",
+s2q:[{v:"sig_means",l:"The groups differ significantly — Early Active has a higher mean (28.6 vs. 25.4)."},{v:"nonsig_ci",l:"The groups do not differ significantly — the p-value is above .05 and the CIs overlap."},{v:"sig_close",l:"The result is nearly significant (p = .107), so we can treat it as meaningful."},{v:"nonsig_wrong",l:"The groups do not differ because the t-statistic (1.64) is too small to be meaningful."}],
+s2a:"nonsig_ci",
+s2ok:"Correct! p = .107 is above .05, and the CIs overlap — no significant difference.",
+s2no:{sig_means:"Not quite. Different means don't equal significance. p = .107 is above .05.",sig_close:"Not quite. We use a threshold of .05. p = .107 is above it — not significant, regardless of how 'close' it seems.",nonsig_wrong:"The conclusion (not significant) is right, but the reasoning should focus on the p-value and CI overlap, not the size of the t-statistic itself."},
+// df Q
+dfqL:"The t-test reports t(58). For an independent-samples t-test, df = N − 2. How many total patients are in this study?",
+dfq:[{v:"56",l:"56 patients"},{v:"58",l:"58 patients"},{v:"60",l:"60 patients"},{v:"30",l:"30 patients"}],
+dfa:"60",dfok:"Correct! df = N − 2. So 58 + 2 = 60 total patients.",
+dfno:"Not quite. For an independent-samples t-test, df = N − 2. If df = 58, then N = 60.",
+// Critical value Q (not sig)
+cvqL:"The t-test is not significant (p = .107). Based on this, what would you expect about the t-statistic (1.64) and the critical t-value?",
+cvq:[{v:"less",l:"The t-statistic (1.64) is less than the critical t-value."},{v:"greater",l:"The t-statistic (1.64) is greater than the critical t-value."},{v:"equal",l:"They are equal when the result is not significant."}],
+cva:"less",cvok:"Correct! The t-statistic didn't clear the bar — it's less than the critical value, so the result is not significant.",
+cvno:"Not quite. A non-significant result means the t-statistic did <em>not</em> exceed the critical value.",
+// Phase 2
+desc3:"The researchers now want to compare four protocols. Sixty additional patients are recruited and assigned to Early Passive Motion and Controlled Active Motion (30 per group), for 120 patients across four groups.",
+g3:[{name:"Early Active",n:30,mean:28.6,sd:9.4},{name:"Immobilization",n:30,mean:25.4,sd:8.1},{name:"Early Passive",n:30,mean:26.8,sd:8.9},{name:"Controlled Active",n:30,mean:27.1,sd:7.6}],
+n2:4,pl:"groups",vizT:"independent",
+vizI:["🔵","🔴","🟢","🟡"],vizL:["Early Active","Immobilization","Early Passive","Controlled Active"],
+q3bA:"anova",q3bok:"Correct! Four independent groups → one-way ANOVA.",
+q3bno:{ind_t:"Not quite. Can't use t-test for four groups — need ANOVA.",dep_t:"Not quite. These are four separate groups, not repeated measures.",rm:"Not quite. Different patients in each group — use one-way ANOVA, not RMANOVA."},
+omLbl:"One-way ANOVA",
+om:{dfB:3,dfW:116,F:2.41,p:.070,eta2:.06,sig:false},
+omInterp:"The one-way ANOVA is <strong>not significant</strong> (p = .070). Even though the two-group comparison showed a trend, when all four groups are considered together, the pattern does not reach significance.",
+// S4 interp Q — correct pos 3
+s4iqL:"Based on the F-test result, what is the most appropriate interpretation?",
+s4iq:[{v:"sig_which",l:"The result is significant — at least one protocol produces different outcomes."},{v:"sig_immob",l:"The result is significant — immobilization is clearly the worst protocol."},{v:"nonsig_stop",l:"The result is not significant — there is no evidence that grip strength differs across the four protocols."},{v:"nonsig_but",l:"The result is not significant, which is surprising, but we should run post-hoc tests anyway."}],
+s4ia:"nonsig_stop",
+s4iok:"Correct! p = .070 is above .05 — not significant. No evidence of differences across the four groups.",
+s4ino:{sig_which:"Not quite. p = .070 is above .05 — not significant.",sig_immob:"Not quite. p = .070 is above .05 — we cannot make claims about specific groups.",nonsig_but:"Not quite about the post-hoc tests. A non-significant ANOVA means we stop — post-hoc tests after a non-significant omnibus are not appropriate."},
+s4dfL:"The ANOVA reports F(3, 116). Using df within = N − k, approximately how many total patients were in the study?",
+s4df:[{v:"116",l:"116 patients"},{v:"119",l:"119 patients"},{v:"120",l:"120 patients"},{v:"60",l:"60 patients"}],
+s4da:"120",s4dok:"Correct! df within = N − k. So N = 116 + 4 = 120 patients.",
+s4dno:"Not quite. df within = N − k, where k is the number of groups (4). So N = 116 + 4 = 120.",
+s4cvL:"The ANOVA is not significant (p = .070). What would you expect about the F-statistic (2.41) and the critical F-value?",
+s4cv:[{v:"greater",l:"The F-statistic (2.41) is greater than the critical F-value."},{v:"less",l:"The F-statistic (2.41) is less than the critical F-value."},{v:"cant_tell",l:"We can't determine this without looking up the F-table."}],
+s4ca:"less",s4cok:"Correct! The F-statistic didn't clear the bar — it's below the critical value, hence not significant.",
+s4cno:"Not quite. A non-significant result means the F-statistic is less than the critical value — it didn't clear the bar.",
+phNeed:false,phOk:"Correct! ANOVA not significant — no post-hoc comparisons.",phNo:"Not quite. p = .070 is above .05. Post-hoc tests are not appropriate after a non-significant ANOVA.",
+nComp:6,bAlpha:.0083,ncO:[],bO:[],phT:"",ph:[],phI:""},
+
+// S3: OT Dep 2→3 RMANOVA SIG — CI of mean diff (does not cross zero = sig)
+{title:"Balance Confidence Recovery After Hip Fracture",
+desc2:"An occupational therapist tracks balance confidence in 32 older adults recovering from hip fracture surgery. Each patient completes the Activities-specific Balance Confidence (ABC) Scale at two time points: discharge from inpatient rehab and 6 weeks post-discharge. Higher scores indicate greater confidence (0–100 scale).",
+outcome:"ABC Scale Score (0–100)",
+g2:[{name:"Discharge",n:32,mean:42.8,sd:14.6},{name:"6 Weeks",n:32,mean:58.3,sd:16.2}],
+q1a:"one",q1ok:"Correct! One group — the same 32 patients measured at both time points.",q1no:"Not quite. Each patient is measured at <em>both</em> time points — one group tested twice.",
+ind:false,n1:2,gl:"conditions",
+q2o:["2","3","4"],q2a:"2",q2ok:"Correct! 2 conditions — discharge and 6 weeks.",q2no:"Not quite. Discharge and 6 weeks = 2 conditions.",
+q3a:"dep_t",q3ok:"Correct! One group at two time points → dependent-samples t-test.",
+q3no:{ind_t:"Not quite. Same patients at both time points → dependent-samples t-test.",anova:"Not quite. ANOVA is for three or more groups. Two conditions → dependent t-test.",rm:"Not quite. RMANOVA is for three or more conditions. Two → dependent t-test."},
+tLbl:"Dependent-samples t-test",
+tR:{df:31,t:-5.02,p:'<.001',md:-15.5,sig:true},
+ciType:"diff",
+ciDiff:{lo:-21.8,hi:-9.2,md:-15.5},
+ciDesc:"95% CI of the Mean Difference",
+ciExplain:"This interval estimates the true difference between time points. If it does <strong>not include zero</strong>, the difference is statistically significant. The negative values reflect the direction (Discharge minus 6 Weeks).",
+tInterp:"Balance confidence improved substantially. The 95% CI (−21.8 to −9.2) does not include zero, and p < .001 — the improvement is statistically significant. The negative values simply reflect the direction: 6-week scores are higher than discharge scores.",
+// S2 interp Q — correct pos 4
+s2qL:"Based on the t-test result and the 95% CI of the mean difference, what is the most appropriate interpretation?",
+s2q:[{v:"neg_bad",l:"The negative t-value means the result is not significant — only positive t-values indicate significance."},{v:"sig_reverse",l:"The result is significant, but the negative mean difference indicates patients got worse."},{v:"nonsig",l:"The conditions do not differ — a CI that doesn't cross zero means results are inconclusive."},{v:"sig_ci",l:"The conditions differ significantly — the p-value is below .05 and the CI does not include zero, indicating real improvement."}],
+s2a:"sig_ci",
+s2ok:"Correct! p < .001 is below .05, and the CI (−21.8 to −9.2) does not include zero. The negative sign reflects direction (improvement), not lack of significance.",
+s2no:{neg_bad:"Not quite. Negative t-values reflect direction, not significance. p < .001 is highly significant.",sig_reverse:"Not quite. The negative difference occurs because Discharge − 6 Weeks = negative (6-week scores are <em>higher</em>). Patients improved.",nonsig:"Not quite. A CI that does <em>not</em> include zero <em>supports</em> significance."},
+// df Q
+dfqL:"The t-test reports t(31). For a dependent-samples t-test, df = n − 1. How many patients were studied?",
+dfq:[{v:"31",l:"31 patients"},{v:"62",l:"62 patients"},{v:"32",l:"32 patients"},{v:"30",l:"30 patients"}],
+dfa:"32",dfok:"Correct! df = n − 1. So 31 + 1 = 32 patients.",
+dfno:"Not quite. For a dependent-samples t-test, df = n − 1. If df = 31, then n = 32.",
+// Critical value Q (sig)
+cvqL:"The t-test is significant (p < .001). Based on this, what would you expect about the t-statistic (5.02) and the critical t-value?",
+cvq:[{v:"equal",l:"They are approximately equal when results are significant."},{v:"less",l:"The t-statistic (5.02) is less than the critical t-value."},{v:"greater",l:"The t-statistic (5.02) is greater than the critical t-value."}],
+cva:"greater",cvok:"Correct! The t-statistic exceeded the critical value — it cleared the bar with room to spare, hence p < .001.",
+cvno:"Not quite. A significant result means the t-statistic <em>exceeds</em> the critical value — it cleared the bar.",
+// Phase 2
+desc3:"The therapist now also measures patients at 12 weeks post-discharge to determine whether improvement continues or plateaus.",
+g3:[{name:"Discharge",n:32,mean:42.8,sd:14.6},{name:"6 Weeks",n:32,mean:58.3,sd:16.2},{name:"12 Weeks",n:32,mean:62.1,sd:15.8}],
+n2:3,pl:"conditions",vizT:"dependent",
+vizC:["#AED6F1","#2E86C1","#1B4F72"],vizL:["Discharge","6 Weeks","12 Weeks"],
+q3bA:"rm",q3bok:"Correct! Same patients at three time points → repeated measures ANOVA.",
+q3bno:{ind_t:"Not quite. Same patients at three time points — need RMANOVA.",dep_t:"Not quite. Dependent t-test is for two conditions. Three → RMANOVA.",anova:"Not quite. Same patients = not independent groups. Need <em>repeated measures</em> ANOVA."},
+omLbl:"Repeated measures ANOVA",
+om:{dfB:2,dfW:62,F:14.87,p:'<.001',eta2:.32,sig:true},
+omInterp:"The RMANOVA is significant — balance confidence changes across the three time points. But does improvement continue after 6 weeks, or does it plateau? Post-hoc comparisons will tell us.",
+// S4 interp Q — correct pos 3
+s4iqL:"Based on the F-test result, what is the most appropriate interpretation?",
+s4iq:[{v:"sig_all",l:"The result is significant — balance confidence improved significantly at every time point."},{v:"nonsig",l:"The result is not significant — no evidence that balance confidence changes."},{v:"sig_which",l:"The result is significant — balance confidence changes across time points, but we don't know which specific pairs differ."},{v:"sig_eta",l:"The result is significant because η² = .32 is large, regardless of the p-value."}],
+s4ia:"sig_which",
+s4iok:"Correct! p < .001 is below .05 — significant. The F-test tells us at least one pair of time points differs, but not which ones.",
+s4ino:{sig_all:"Not quite. Significant RMANOVA means at least one pair differs, not that every pair does.",nonsig:"Not quite. p < .001 is far below .05 — this <em>is</em> significant.",sig_eta:"Not quite. Significance comes from the p-value, not η². η² tells us about effect <em>magnitude</em>."},
+s4dfL:"The RMANOVA reports F(2, 62). Based on df between = k − 1, how many time points were measured?",
+s4df:[{v:"2",l:"2 time points"},{v:"3",l:"3 time points"},{v:"62",l:"62 time points"},{v:"32",l:"32 time points"}],
+s4da:"3",s4dok:"Correct! df between = k − 1 = 2, so k = 3 time points.",
+s4dno:"Not quite. df between = k − 1. If df = 2, then k = 2 + 1 = 3 time points.",
+s4cvL:"The RMANOVA is significant (p < .001). What would you expect about the F-statistic (14.87) and the critical F-value?",
+s4cv:[{v:"less",l:"The F-statistic (14.87) is less than the critical F-value."},{v:"greater",l:"The F-statistic (14.87) is greater than the critical F-value."},{v:"equal",l:"They must be equal for significance."}],
+s4ca:"greater",s4cok:"Correct! The F-statistic cleared the bar by a wide margin — hence the very small p-value.",
+s4cno:"Not quite. A significant result means the F-statistic <em>exceeds</em> the critical value.",
+phNeed:true,phOk:"Correct! RMANOVA is significant — post-hoc comparisons needed.",phNo:"Not quite. The RMANOVA is significant — post-hoc tests are needed to find where the differences are.",
+nComp:3,bAlpha:.0167,
+ncO:["2","3","4","6"],ncA:"3",ncOk:"Correct! 3 conditions: k(k−1)/2 = 3(2)/2 = 3 comparisons.",ncNo:"Not quite. k(k−1)/2 = 3(2)/2 = 3.",
+bO:["0.025","0.0167","0.0083","0.0050"],bA:"0.0167",bOk:"Correct! 0.05 ÷ 3 = 0.0167.",bNo:"Not quite. 0.05 ÷ 3 = 0.0167.",
+phT:"paired (dependent-samples) t-tests",
+ph:[{pair:"Discharge vs. 6 Weeks",diff:-15.5,t:-5.02,df:31,p:'<.001',sig:true},{pair:"Discharge vs. 12 Weeks",diff:-19.3,t:-5.84,df:31,p:'<.001',sig:true},{pair:"6 Weeks vs. 12 Weeks",diff:-3.8,t:-1.34,df:31,p:.190,sig:false}],
+phI:"Patients improved significantly from discharge to both 6 and 12 weeks, but the 6-to-12-week change was not significant. Most recovery occurred in the first 6 weeks — clinically, this suggests front-loading OT services early post-discharge."}
+];
+
+// ======================== HELPERS ========================
+let sc=null;
+function fP(p){return typeof p==='string'?'p '+p:p<.001?'p < .001':'p = '+p.toFixed(3)}
+function fS(p){return typeof p==='string'?p:p<.001?'< .001':p.toFixed(3)}
+function sEl(e){if(e)e.scrollIntoView({behavior:'smooth',block:'start'})}
+function uBar(s){const L=['Step 1: The Study','Step 2: Results','Step 3: Expand','Step 4: Interpret'];let h='';for(let i=1;i<=4;i++){let c='si';if(i<s)c+=' d';else if(i===s)c+=' a';else c+=' l';h+=`<div class="${c}">${L[i-1]}</div>`}document.getElementById('sbar').innerHTML=h}
+function mkT(g){let h='<table class="dt"><thead><tr><th></th><th>n</th><th>Mean</th><th>SD</th></tr></thead><tbody>';g.forEach(r=>{h+=`<tr><td style="text-align:left;font-weight:600">${r.name}</td><td>${r.n}</td><td>${r.mean.toFixed(1)}</td><td>${r.sd.toFixed(1)}</td></tr>`});return h+'</tbody></table>'}
+
+function mkCIdiff(lo,hi,md){
+  const vals=[lo,hi,0],mn=Math.min(...vals)-2,mx=Math.max(...vals)+2,rng=mx-mn;
+  const x=v=>40+((v-mn)/rng)*420;
+  const zx=x(0),lx=x(lo),hx=x(hi),dx=x(md);
+  const cross=lo<=0&&hi>=0,zC=cross?'#C0504D':'#8B9098';
+  return `<svg viewBox="0 0 500 65" style="width:100%;height:65px;" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${zx}" y1="8" x2="${zx}" y2="55" stroke="${zC}" stroke-width="2" stroke-dasharray="5,3"/>
+    <text x="${zx}" y="63" text-anchor="middle" fill="${zC}" font-size="11" font-family="Calibri">0</text>
+    <line x1="${lx}" y1="32" x2="${hx}" y2="32" stroke="#3D7FA9" stroke-width="3"/>
+    <line x1="${lx}" y1="24" x2="${lx}" y2="40" stroke="#3D7FA9" stroke-width="2.5"/>
+    <line x1="${hx}" y1="24" x2="${hx}" y2="40" stroke="#3D7FA9" stroke-width="2.5"/>
+    <circle cx="${dx}" cy="32" r="5" fill="#172940"/>
+    <text x="${lx}" y="16" text-anchor="middle" fill="#616467" font-size="11" font-family="Calibri">${lo.toFixed(1)}</text>
+    <text x="${hx}" y="16" text-anchor="middle" fill="#616467" font-size="11" font-family="Calibri">${hi.toFixed(1)}</text>
+    <text x="${dx}" y="50" text-anchor="middle" fill="#172940" font-size="11" font-weight="bold" font-family="Calibri">${md.toFixed(1)}</text>
+  </svg>`}
+
+function mkCI2(c1,c2){
+  const all=[c1.lo,c1.hi,c2.lo,c2.hi],mn=Math.min(...all)-3,mx=Math.max(...all)+3,rng=mx-mn;
+  const x=v=>40+((v-mn)/rng)*420;
+  const overlap=c1.lo<=c2.hi&&c2.lo<=c1.hi;
+  // shading for overlap region
+  let overlapSvg='';
+  if(overlap){
+    const oL=Math.max(c1.lo,c2.lo),oR=Math.min(c1.hi,c2.hi);
+    overlapSvg=`<rect x="${x(oL)}" y="12" width="${x(oR)-x(oL)}" height="42" fill="#C0504D" opacity="0.1" rx="2"/>`;
+  }
+  return `<svg viewBox="0 0 500 80" style="width:100%;height:80px;" xmlns="http://www.w3.org/2000/svg">
+    ${overlapSvg}
+    <line x1="${x(c1.lo)}" y1="24" x2="${x(c1.hi)}" y2="24" stroke="#3D7FA9" stroke-width="3"/>
+    <line x1="${x(c1.lo)}" y1="16" x2="${x(c1.lo)}" y2="32" stroke="#3D7FA9" stroke-width="2.5"/>
+    <line x1="${x(c1.hi)}" y1="16" x2="${x(c1.hi)}" y2="32" stroke="#3D7FA9" stroke-width="2.5"/>
+    <circle cx="${x(c1.mean)}" cy="24" r="5" fill="#172940"/>
+    <text x="${x(c1.lo)}" y="12" text-anchor="middle" fill="#616467" font-size="10" font-family="Calibri">${c1.lo.toFixed(1)}</text>
+    <text x="${x(c1.hi)}" y="12" text-anchor="middle" fill="#616467" font-size="10" font-family="Calibri">${c1.hi.toFixed(1)}</text>
+    <text x="${x(c1.mean)}" y="38" text-anchor="middle" fill="#172940" font-size="10" font-weight="bold" font-family="Calibri">${c1.label}</text>
+    <line x1="${x(c2.lo)}" y1="52" x2="${x(c2.hi)}" y2="52" stroke="#C0504D" stroke-width="3"/>
+    <line x1="${x(c2.lo)}" y1="44" x2="${x(c2.lo)}" y2="60" stroke="#C0504D" stroke-width="2.5"/>
+    <line x1="${x(c2.hi)}" y1="44" x2="${x(c2.hi)}" y2="60" stroke="#C0504D" stroke-width="2.5"/>
+    <circle cx="${x(c2.mean)}" cy="52" r="5" fill="#172940"/>
+    <text x="${x(c2.lo)}" y="72" text-anchor="middle" fill="#616467" font-size="10" font-family="Calibri">${c2.lo.toFixed(1)}</text>
+    <text x="${x(c2.hi)}" y="72" text-anchor="middle" fill="#616467" font-size="10" font-family="Calibri">${c2.hi.toFixed(1)}</text>
+    <text x="${x(c2.mean)}" y="66" text-anchor="middle" fill="#172940" font-size="10" font-weight="bold" font-family="Calibri">${c2.label}</text>
+  </svg>`}
+
+function mkViz(labels,type,icons,colors,isNew){
+  let h='<div class="gv">';const nP=type==='independent'?5:1;
+  labels.forEach((lbl,i)=>{
+    const nc=isNew&&i>=2?' gn':'';
+    h+=`<div class="gc${nc}"><div style="display:flex;gap:3px;justify-content:center;margin-bottom:6px;flex-wrap:wrap;">`;
+    for(let j=0;j<nP;j++){
+      if(type==='dependent')h+=`<span class="gi" style="font-size:28px;">👤</span>`;
+      else h+=`<span class="gi">${icons[i]}</span>`;
+    }
+    h+=`</div><div class="gl">${lbl}</div>`;
+    if(type==='dependent'&&colors&&colors[i])h+=`<div style="width:40px;height:6px;border-radius:3px;background:${colors[i]};margin:4px auto 0;"></div>`;
+    h+=`</div>`;});
+  h+=`<div class="gp">${type==='independent'?'Different patients in each group':'Same patients tested in every condition'}</div></div>`;
+  return h}
+
+// ======================== QUESTION SYSTEM ========================
+function rQ(id,label,opts,correct,onOk,getFb){
+  const c=document.getElementById(id);
+  let h=`<div class="qb fi2"><div class="ql">${label}</div><div class="qo" id="${id}_o">`;
+  opts.forEach((o,i)=>{h+=`<button class="qp" data-v="${o.v}" id="${id}_${i}">${o.l}</button>`});
+  h+=`</div><div class="fb" id="${id}_f"></div></div>`;
+  c.innerHTML=h;c._ok=onOk;c._fb=getFb;c._c=correct;c._done=false;
+  opts.forEach((_,i)=>{document.getElementById(`${id}_${i}`).addEventListener('click',function(){aQ(id,this.getAttribute('data-v'))})})
+}
+function aQ(id,ch){
+  const c=document.getElementById(id);if(c._done)return;
+  const cor=c._c,ok=ch===cor,f=document.getElementById(id+'_f'),os=document.getElementById(id+'_o');
+  if(ok){c._done=true;os.querySelectorAll('.qp').forEach(b=>{b.getAttribute('data-v')===ch?b.className='qp ok':b.className='qp lk'});
+    f.className='fb fc';f.innerHTML=c._fb(ch,true);if(c._ok)setTimeout(()=>c._ok(),500)}
+  else{os.querySelectorAll('.qp').forEach(b=>{b.getAttribute('data-v')===ch?b.className='qp no':b.getAttribute('data-v')===cor?b.className='qp sk':b.className='qp lk'});
+    f.className='fb fi';f.innerHTML=c._fb(ch,false);
+    setTimeout(()=>{os.querySelectorAll('.qp').forEach(b=>{b.getAttribute('data-v')===ch?b.className='qp lk':b.className='qp'});f.className='fb';f.innerHTML=''},3500)}
+}
+
+// ======================== STEPS ========================
+function load(i){sc=D[i];document.querySelectorAll('.sb').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.getElementById('pipe').classList.remove('hd');
+  ['s1','s2','s3','s4'].forEach(id=>{document.getElementById(id).innerHTML='';document.getElementById(id).className=''});
+  uBar(1);rS1();sEl(document.getElementById('pipe'))}
+
+function rS1(){
+  const e=document.getElementById('s1');
+  let h=`<div class="fi2"><div class="sh"><div class="snm">1</div><h2>Meet the Study</h2></div>`;
+  h+=`<div class="ib">${sc.desc2}</div><p style="font-size:13px;color:var(--muted);margin-bottom:8px;">Outcome: ${sc.outcome}</p>`;
+  h+=mkT(sc.g2)+`<hr class="dv"><div id="q1a"></div><div id="q1b"></div><div id="q1c"></div><div id="q1n"></div></div>`;
+  e.innerHTML=h;
+  rQ('q1a','Based on the study description, how many groups are there?',
+    [{v:'multiple',l:'Multiple groups — different patients in each group'},{v:'one',l:'One group — the same patients tested under different conditions'}],
+    sc.q1a,()=>rS1b(),(c,ok)=>ok?sc.q1ok:sc.q1no)}
+
+function rS1b(){rQ('q1b',`How many ${sc.gl} are in this study?`,sc.q2o.map(v=>({v,l:v+' '+sc.gl})),sc.q2a,()=>rS1c(),(c,ok)=>ok?sc.q2ok:sc.q2no);sEl(document.getElementById('q1b'))}
+
+function rS1c(){
+  const t=[{v:'ind_t',l:'Independent-samples t-test'},{v:'dep_t',l:'Dependent-samples t-test'},{v:'anova',l:'One-way ANOVA'},{v:'rm',l:'Repeated measures ANOVA'}];
+  rQ('q1c',`Given ${sc.n1} ${sc.gl}, which test is most appropriate?`,t,sc.q3a,
+    ()=>{document.getElementById('q1n').innerHTML=`<div class="bc fi2"><button class="btn bp" onclick="gS2()">See the Results →</button></div>`;sEl(document.getElementById('q1n'))},
+    (c,ok)=>{if(ok)return sc.q3ok;return sc.q3no[c]||'Not quite. Try again.'});
+  sEl(document.getElementById('q1c'))}
+
+function gS2(){uBar(2);document.getElementById('s1').classList.add('col');rS2();sEl(document.getElementById('s2'))}
+
+function rS2(){
+  const e=document.getElementById('s2'),r=sc.tR;
+  let h=`<div class="fi2"><div class="sh"><div class="snm">2</div><h2>The Two-${sc.gl==='groups'?'Group':'Condition'} Results</h2></div>`;
+  h+=`<div class="ib">Here are the results of the <strong>${sc.tLbl}</strong>. Review the numbers carefully before answering.</div>`;
+  h+=`<div class="rc"><div class="rl">${sc.tLbl} Result</div><div class="rs">t(${r.df}) = ${Math.abs(r.t).toFixed(2)}, ${fP(r.p)}</div>`;
+  if(sc.ciType==='diff'){const ci=sc.ciDiff;h+=`<div class="ri">Mean difference = ${ci.md.toFixed(1)} &nbsp;(95% CI: ${ci.lo.toFixed(1)} to ${ci.hi.toFixed(1)})</div>`}
+  h+=`</div>`;
+  // CI visualization
+  h+=`<h3>${sc.ciDesc}</h3><p style="font-size:13px;color:var(--muted);margin-bottom:4px;">${sc.ciExplain}</p>`;
+  if(sc.ciType==='diff')h+=mkCIdiff(sc.ciDiff.lo,sc.ciDiff.hi,sc.ciDiff.md);
+  else h+=mkCI2(sc.ci1,sc.ci2);
+  h+=`<div id="q2a"></div><div id="q2b"></div><div id="q2c"></div><div id="q2r"></div><div id="q2n"></div></div>`;
+  e.innerHTML=h;
+  // Interpretation Q
+  rQ('q2a',sc.s2qL,sc.s2q,sc.s2a,()=>{
+    document.getElementById('q2r').innerHTML=`<div class="fi2"><div class="cb">${sc.tInterp}</div></div>`;
+    setTimeout(()=>{rS2df()},300)},
+    (c,ok)=>{if(ok)return sc.s2ok;return sc.s2no[c]||'Not quite. Review the p-value and CI.'})}
+
+function rS2df(){
+  rQ('q2b',sc.dfqL,sc.dfq,sc.dfa,()=>rS2cv(),(c,ok)=>ok?sc.dfok:sc.dfno);sEl(document.getElementById('q2b'))}
+
+function rS2cv(){
+  rQ('q2c',sc.cvqL,sc.cvq,sc.cva,()=>{
+    document.getElementById('q2n').innerHTML=`<div class="bc fi2"><button class="btn bp" onclick="gS3()">What If We Add More ${sc.gl==='groups'?'Groups':'Conditions'}? →</button></div>`;
+    sEl(document.getElementById('q2n'))},
+    (c,ok)=>ok?sc.cvok:sc.cvno);sEl(document.getElementById('q2c'))}
+
+function gS3(){uBar(3);document.getElementById('s2').classList.add('col');rS3();sEl(document.getElementById('s3'))}
+
+function rS3(){
+  const e=document.getElementById('s3');
+  let h=`<div class="fi2"><div class="sh"><div class="snm">3</div><h2>What Happens With ${sc.n2} ${sc.pl==='groups'?'Groups':'Conditions'}?</h2></div>`;
+  h+=`<div class="ib">${sc.desc3}</div>`;
+  if(sc.vizT==='independent')h+=mkViz(sc.vizL,'independent',sc.vizI,null,true);
+  else h+=mkViz(sc.vizL,'dependent',null,sc.vizC,true);
+  h+=`<p style="font-size:13px;color:var(--muted);margin-bottom:8px;">Outcome: ${sc.outcome}</p>`+mkT(sc.g3);
+  h+=`<div class="wb"><strong>Can we just run multiple ${sc.ind?'independent':'paired'} t-tests?</strong><br>With ${sc.n2} ${sc.pl}, there would be ${sc.nComp} pairwise comparisons. Running that many t-tests at α = .05 inflates our false positive risk. We need a different approach.</div>`;
+  h+=`<div id="q3a"></div><div id="q3n"></div></div>`;
+  e.innerHTML=h;
+  const t=[{v:'ind_t',l:'Independent-samples t-test'},{v:'dep_t',l:'Dependent-samples t-test'},{v:'anova',l:'One-way ANOVA'},{v:'rm',l:'Repeated measures ANOVA'}];
+  rQ('q3a',`With ${sc.n2} ${sc.pl}, which test is most appropriate?`,t,sc.q3bA,
+    ()=>{document.getElementById('q3n').innerHTML=`<div class="bc fi2"><button class="btn bp" onclick="gS4()">See the ${sc.omLbl} Results →</button></div>`;sEl(document.getElementById('q3n'))},
+    (c,ok)=>{if(ok)return sc.q3bok;return sc.q3bno[c]||'Not quite.'})}
+
+function gS4(){uBar(4);document.getElementById('s3').classList.add('col');rS4();sEl(document.getElementById('s4'))}
+
+function rS4(){
+  const e=document.getElementById('s4'),o=sc.om;
+  let h=`<div class="fi2"><div class="sh"><div class="snm">4</div><h2>Interpreting the Results</h2></div>`;
+  h+=`<div class="ib">Here are the results of the <strong>${sc.omLbl}</strong>. Review carefully before answering.</div>`;
+  h+=`<div class="rc"><div class="rl">${sc.omLbl} Result</div><div class="rs">F(${o.dfB}, ${o.dfW}) = ${o.F.toFixed(2)}, ${fP(o.p)}, η² = ${o.eta2.toFixed(2)}</div></div>`;
+  h+=`<div id="q4i"></div><div id="q4r"></div><div id="q4d"></div><div id="q4v"></div><div id="q4p"></div><div id="q4nc"></div><div id="q4b"></div><div id="q4res"></div><div id="q4end"></div></div>`;
+  e.innerHTML=h;
+  // Interpretation Q
+  rQ('q4i',sc.s4iqL,sc.s4iq,sc.s4ia,()=>{
+    document.getElementById('q4r').innerHTML=`<div class="fi2"><div class="cb">${sc.omInterp}</div></div>`;
+    setTimeout(()=>rS4df(),300)},
+    (c,ok)=>{if(ok)return sc.s4iok;return sc.s4ino[c]||'Not quite. Check the p-value.'})}
+
+function rS4df(){
+  rQ('q4d',sc.s4dfL,sc.s4df,sc.s4da,()=>rS4cv(),(c,ok)=>ok?sc.s4dok:sc.s4dno);sEl(document.getElementById('q4d'))}
+
+function rS4cv(){
+  rQ('q4v',sc.s4cvL,sc.s4cv,sc.s4ca,()=>{
+    setTimeout(()=>{
+      rQ('q4p','Based on this result, are post-hoc pairwise comparisons necessary?',
+        [{v:'yes',l:'Yes — find which specific '+(sc.ind?'groups':'conditions')+' differ'},{v:'no',l:'No — post-hoc comparisons are not appropriate here'}],
+        sc.phNeed?'yes':'no',()=>{if(sc.phNeed)rS4nc();else rNoPost()},(c,ok)=>ok?sc.phOk:sc.phNo);
+      sEl(document.getElementById('q4p'))},300)},
+    (c,ok)=>ok?sc.s4cok:sc.s4cno);sEl(document.getElementById('q4v'))}
+
+function rS4nc(){rQ('q4nc',`How many pairwise comparisons with ${sc.n2} ${sc.pl}?`,sc.ncO.map(v=>({v,l:v+' comparisons'})),sc.ncA,()=>rS4b(),(c,ok)=>ok?sc.ncOk:sc.ncNo);sEl(document.getElementById('q4nc'))}
+
+function rS4b(){rQ('q4b',`Bonferroni-adjusted alpha? (0.05 ÷ ${sc.nComp})`,sc.bO.map(v=>({v,l:'α = '+v})),sc.bA,()=>rPH(),(c,ok)=>ok?sc.bOk:sc.bNo);sEl(document.getElementById('q4b'))}
+
+function rPH(){
+  const e=document.getElementById('q4res');
+  let h=`<div class="fi2"><hr class="dv"><h3>Post-Hoc Pairwise Comparisons</h3>`;
+  h+=`<div class="fx"><div class="fs">Bonferroni-Adjusted Alpha</div><div class="fb2">α = 0.05 ÷ ${sc.nComp} = ${sc.bAlpha.toFixed(4)}</div><div class="fs">Each comparison must reach p < ${sc.bAlpha.toFixed(4)}</div></div>`;
+  h+=`<p style="font-size:13px;color:var(--steel);margin-bottom:12px;text-align:center;"><em>Remember — <a class="nl" href="https://professoratx.github.io/stats-tools/bonferroni-limbo.html" target="_blank">see our Bonferroni Limbo tool</a> for a visual!</em></p>`;
+  h+=`<p style="font-size:14px;color:var(--gray);margin-bottom:8px;">Post-hoc tests: <strong>${sc.phT}</strong> with Bonferroni correction</p>`;
+  h+=`<table class="pt"><thead><tr><th>Comparison</th><th>Mean Diff</th><th>t(df)</th><th>p-value</th><th>Adj. α</th><th>Significant?</th></tr></thead><tbody>`;
+  sc.ph.forEach((c,i)=>{h+=`<tr><td style="text-align:left;font-weight:600;font-size:12px;">${c.pair}</td><td>${c.diff.toFixed(1)}</td><td style="font-style:italic;">t(${c.df}) = ${Math.abs(c.t).toFixed(2)}</td><td>${fS(c.p)}</td><td>${sc.bAlpha.toFixed(4)}</td><td style="font-weight:700;color:var(--muted);" id="ps${i}">?</td></tr>`});
+  h+=`</tbody></table><div id="phq"></div><div id="phr"></div></div>`;
+  e.innerHTML=h;
+  // Build Q
+  const sigN=sc.ph.filter(c=>c.sig).map(c=>c.pair),nsN=sc.ph.filter(c=>!c.sig).map(c=>c.pair),nS=sigN.length,nT=sc.ph.length;
+  let opts=[],ans='';
+  if(nS===0){opts=[{v:'none',l:'None are significant.'},{v:'all',l:'All are significant.'},{v:'first',l:'Only the first comparison.'}];ans='none'}
+  else if(nS===nT){opts=[{v:'all',l:'All are significant.'},{v:'none',l:'None are significant.'},{v:'some',l:'Only some.'}];ans='all'}
+  else{
+    const cL=sigN.join(' and ')+' '+(sigN.length===1?'is':'are')+' significant; the rest are not.';
+    const wL=nsN.slice(0,2).join(' and ')+' '+(nsN.length===1?'is':'are')+' significant; the rest are not.';
+    opts=[{v:'correct',l:cL},{v:'flipped',l:wL},{v:'all',l:'All comparisons are significant.'},{v:'none',l:'None are significant.'}];ans='correct'}
+  let det='Compare each p-value to α = '+sc.bAlpha.toFixed(4)+':<br>';
+  sc.ph.forEach(c=>{det+=`• ${c.pair}: p = ${fS(c.p)} → ${c.sig?'<strong>significant</strong> (below adjusted α)':'<strong>not significant</strong> (above adjusted α)'}.<br>`});
+  rQ('phq','Review each p-value above. Which comparisons are significant at the adjusted alpha?',opts,ans,
+    ()=>{sc.ph.forEach((c,i)=>{const cell=document.getElementById('ps'+i);if(cell){cell.className=c.sig?'ps':'pn';cell.textContent=c.sig?'✓ Yes':'✗ No'}});
+      let rv=`<div class="fi2"><div class="cb">${sc.phI}</div>`;
+      rv+=`<div class="ib"><strong>Key Takeaways:</strong><br><br><strong>1.</strong> With two ${sc.gl}, a <strong>${sc.tLbl.toLowerCase()}</strong> compares them directly.<br><strong>2.</strong> With ${sc.n2} ${sc.pl}, use a <strong>${sc.omLbl.toLowerCase()}</strong> first.<br><strong>3.</strong> If significant, run <strong>${sc.phT}</strong> with <strong>Bonferroni correction</strong>.<br><strong>4.</strong> Bonferroni raises the bar — results significant with two ${sc.gl} may not survive multiple comparisons.</div></div>`;
+      document.getElementById('phr').innerHTML=rv;
+      document.getElementById('q4end').innerHTML=`<div class="bc fi2"><button class="btn" onclick="reset()">← Choose Another Scenario</button></div>`;
+      sEl(document.getElementById('phr'))},
+    (c,ok)=>{if(ok)return'Correct! '+det;return'Not quite. '+det});
+  sEl(document.getElementById('phq'))}
+
+function rNoPost(){
+  const e=document.getElementById('q4end'),tw=sc.tR.sig;
+  let h=`<div class="fi2"><div class="ib"><strong>Key Takeaways:</strong><br><br>`;
+  if(tw){h+=`<strong>1.</strong> The two-${sc.gl==='groups'?'group':'condition'} <strong>${sc.tLbl.toLowerCase()}</strong> was significant.<br><strong>2.</strong> The <strong>${sc.omLbl.toLowerCase()}</strong> with ${sc.n2} ${sc.pl} was <strong>not significant</strong>.<br><strong>3.</strong> Non-significant omnibus → <strong>stop</strong>. No post-hoc tests.<br><strong>4.</strong> A significant two-${sc.gl==='groups'?'group':'condition'} result can disappear when more ${sc.pl} are added.</div>`}
+  else{h+=`<strong>1.</strong> The two-${sc.gl==='groups'?'group':'condition'} <strong>${sc.tLbl.toLowerCase()}</strong> was not significant.<br><strong>2.</strong> The <strong>${sc.omLbl.toLowerCase()}</strong> was also <strong>not significant</strong>.<br><strong>3.</strong> Non-significant omnibus → <strong>stop</strong>. No post-hoc tests.<br><strong>4.</strong> Non-significant results are informative — no evidence these ${sc.pl} produce different outcomes.</div>`}
+  h+=`<div class="bc"><button class="btn" onclick="reset()">← Choose Another Scenario</button></div></div>`;
+  e.innerHTML=h;sEl(e)}
+
+function reset(){document.getElementById('pipe').classList.add('hd');
+  ['s1','s2','s3','s4'].forEach(id=>{document.getElementById(id).innerHTML='';document.getElementById(id).className=''});
+  document.querySelectorAll('.sb').forEach(b=>b.classList.remove('active'));sc=null;window.scrollTo({top:0,behavior:'smooth'})}
+</script>
+</body>
+</html>
