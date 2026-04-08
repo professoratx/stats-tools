@@ -34,7 +34,7 @@
 <div class="wrap">
   <h1>The Bonferroni limbo</h1>
   <p class="subtitle">Why more comparisons means a stricter threshold — and how Bonferroni adjustment works</p>
-  <div class="instructions"><strong>How to use:</strong> Each stick figure represents one pairwise comparison. Its height is its p-value — taller figures have larger p-values. The limbo bar is the Bonferroni-adjusted alpha (.05 divided by the number of comparisons). Figures short enough to fit under the bar make it through. Increase the number of groups and watch the bar drop, making it harder for anyone to pass.</div>
+  <div class="instructions"><strong>How to use:</strong> Use the slider to set the number of groups, then click "Run the comparisons" to simulate the limbo.<br><br><strong>The bar</strong> represents the Bonferroni-adjusted alpha level (.05 divided by the number of comparisons). As you increase the number of groups, more comparisons are needed, and the bar drops lower — making it harder for any comparison to pass.<br><br><strong>The figures</strong> represent the p-values from each pairwise comparison. A figure's height corresponds to its p-value — a taller figure has a higher p-value, and a shorter figure has a lower p-value.<br><br><strong>The result:</strong> If a figure is short enough to make it under the bar, that comparison is statistically significant at the Bonferroni-adjusted alpha level. If a figure is too tall to pass under the bar, that comparison is not statistically significant at the adjusted level — even if it would have been significant at the original .05.</div>
 
   <div class="cards-top">
     <div class="card"><div class="card-label">Groups (k)</div><div class="card-val" id="o-k">3</div></div>
@@ -59,8 +59,8 @@
   <div class="verdict" id="verdict"></div>
 
   <div class="cards-bot">
-    <div class="card"><div class="card-label">Made it under the bar</div><div class="card-val" style="color:#1D9E75;" id="o-surv">&ndash;</div></div>
-    <div class="card"><div class="card-label">Too tall for the bar</div><div class="card-val" style="color:#E24B4A;" id="o-fail">&ndash;</div></div>
+    <div class="card"><div class="card-label">Made it under (statistically significant)</div><div class="card-val" style="color:#1D9E75;" id="o-surv">&ndash;</div></div>
+    <div class="card"><div class="card-label">Too tall (not statistically significant)</div><div class="card-val" style="color:#E24B4A;" id="o-fail">&ndash;</div></div>
   </div>
 
   <p class="footer">ASHS 6400: Methods of Data Analysis &bull; Each figure's height = its p-value. The bar = Bonferroni-adjusted alpha. More comparisons = lower bar = harder to limbo under.</p>
@@ -274,9 +274,9 @@ function updateSummary(){
   document.getElementById('o-surv').textContent=surv+' / '+comp;
   document.getElementById('o-fail').textContent=fail+' / '+comp;
   var vb=document.getElementById('verdict');vb.style.opacity='1';
-  if(surv>0&&fail>0){vb.style.background='#E1F5EE';vb.style.color='#0F6E56';vb.textContent=surv+' comparison'+(surv>1?'s':'')+' made it under the Bonferroni bar. '+fail+' were too tall.';}
-  else if(surv>0){vb.style.background='#E1F5EE';vb.style.color='#0F6E56';vb.textContent='All '+surv+' comparisons limboed under!';}
-  else{vb.style.background='#FCEBEB';vb.style.color='#A32D2D';vb.textContent='No comparisons made it under the Bonferroni bar.';}
+  if(surv>0&&fail>0){vb.style.background='#E1F5EE';vb.style.color='#0F6E56';vb.textContent=surv+' comparison'+(surv>1?'s':'')+' made it under (statistically significant). '+fail+' were too tall (not statistically significant).';}
+  else if(surv>0){vb.style.background='#E1F5EE';vb.style.color='#0F6E56';vb.textContent='All '+surv+' comparisons made it under (statistically significant)!';}
+  else{vb.style.background='#FCEBEB';vb.style.color='#A32D2D';vb.textContent='No comparisons made it under the bar. None are statistically significant at the Bonferroni-adjusted alpha level.';}
 }
 
 function resetAll(){
