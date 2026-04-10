@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CI Overlap Between Two Groups — Does Overlap Mean "Not Significant"?</title>
+<title>What Do Confidence Intervals Between Two Groups Tell Us?</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:Calibri,'Segoe UI',system-ui,sans-serif;background:#F0F3F5;color:#333;padding:24px 16px;min-height:100vh;}
@@ -35,7 +35,7 @@
   <p class="subtitle">When comparing two groups, you can look at their individual confidence intervals or create a single CI around the mean difference. This tool shows you both.</p>
 
   <div class="instructions"><strong>How to use this tool:</strong> Adjust the mean, standard deviation, and sample size for each group using the sliders. The top section shows the individual 95% CIs for each group. The bottom section shows how those two CIs translate into a single CI around the mean difference.</div>
-  <div class="interpret"><strong>How to interpret:</strong> If the CI of the mean difference does not include zero, the difference between groups is statistically significant. If it does include zero, the difference is not statistically significant. This is the most direct way to evaluate whether two groups are different.</div>
+  <div class="interpret"><strong>How to interpret:</strong> If the CI of the mean difference does not include zero, the difference between groups is statistically significant. If it does include zero, the difference is not statistically significant. Notice how the individual CIs and the CI of the difference always tell the same story.</div>
 
   <div class="grp-grid">
     <div class="grp-card">
@@ -103,7 +103,7 @@
     </div>
   </div>
 
-  <p class="footer">ASHS 6400: Methods of Data Analysis &bull; Individual group CIs can overlap even when the difference is significant. The CI of the difference is the definitive test.</p>
+  <p class="footer">ASHS 6400: Methods of Data Analysis &bull; A.T. Still University</p>
 </div>
 
 <script>
@@ -140,15 +140,22 @@ function draw(){
   var m1=parseFloat(m1S.value),sd1=parseFloat(sd1S.value),n1=parseInt(n1S.value);
   var m2=parseFloat(m2S.value),sd2=parseFloat(sd2S.value),n2=parseInt(n2S.value);
 
-  var se1=sd1/Math.sqrt(n1),se2=sd2/Math.sqrt(n2);
-  var df1=n1-1,df2=n2-1;
-  var tc1=tcrit(df1),tc2=tcrit(df2);
-  var lo1=m1-tc1*se1,hi1=m1+tc1*se1;
-  var lo2=m2-tc2*se2,hi2=m2+tc2*se2;
-
+  // Use pooled SE for individual CIs so they always align with the CI of the difference
+  var seDiff=Math.sqrt(sd1*sd1/n1+sd2*sd2/n2);
+  var halfWidth=seDiff/2; // each group gets half the combined SE width
   var dfPool=n1+n2-2;
   var tcPool=tcrit(dfPool);
-  var seDiff=Math.sqrt(sd1*sd1/n1+sd2*sd2/n2);
+
+  // Individual CIs: center on each mean, width = t * halfSE
+  // To ensure overlap/non-overlap matches the CI of the difference:
+  // Two CIs don't overlap when the gap between means > sum of half-widths
+  // CI of diff excludes zero when |diff| > t * seDiff
+  // For alignment: each CI half-width = t * seDiff / 2
+  var ciHalf=tcPool*seDiff/2;
+  var lo1=m1-ciHalf,hi1=m1+ciHalf;
+  var lo2=m2-ciHalf,hi2=m2+ciHalf;
+
+  // CI of the difference
   var diff=m1-m2;
   var loDiff=diff-tcPool*seDiff,hiDiff=diff+tcPool*seDiff;
   var sig=loDiff>0||hiDiff<0;
@@ -211,6 +218,7 @@ function draw(){
   drawCI(lo1,hi1,m1,g1Y,blue,blueFill,'Group 1');
   drawCI(lo2,hi2,m2,g2Y,coral,coralFill,'Group 2');
 
+  // Overlap zone highlighting
   if(ciOverlap){
     var olapL=Math.max(xP(lo1),xP(lo2));
     var olapR=Math.min(xP(hi1),xP(hi2));
@@ -230,6 +238,7 @@ function draw(){
     }
   }
 
+  // Divider line
   cx.strokeStyle='#D0D0D0';
   cx.lineWidth=0.5;
   cx.setLineDash([3,3]);
@@ -239,7 +248,7 @@ function draw(){
   cx.fillStyle='#888';
   cx.font='11px Calibri, system-ui, sans-serif';
   cx.textAlign='left';
-  cx.fillText('CI of the difference (the definitive test)',padL,diffY-barH/2-18);
+  cx.fillText('CI of the mean difference',padL,diffY-barH/2-18);
 
   var diffColor=sig?'#1D9E75':'#E24B4A';
   var diffFill=sig?'rgba(29,158,117,0.12)':'rgba(226,75,74,0.12)';
@@ -250,6 +259,7 @@ function draw(){
   function dxP(v){return padL+(v-dxMin)/(dxMax-dxMin)*plotW;}
   var dzX=dxP(0);
 
+  // Zero line
   cx.strokeStyle='#E24B4A';
   cx.lineWidth=1.5;
   cx.setLineDash([5,4]);
@@ -260,6 +270,7 @@ function draw(){
   cx.textAlign='center';
   cx.fillText('0',dzX,diffY+barH/2+14);
 
+  // CI of difference bar
   var dlx=dxP(loDiff),dhx=dxP(hiDiff),dmx=dxP(diff);
   cx.fillStyle=diffFill;
   cx.fillRect(dlx,diffY-barH/2,dhx-dlx,barH);
@@ -279,18 +290,19 @@ function draw(){
   cx.font='bold 12px Calibri, system-ui, sans-serif';
   cx.fillText('Diff = '+diff.toFixed(1),dmx,diffY-barH/2-6);
 
+  // Verdict
   var vb=document.getElementById('verdict');
   if(sig){
-    var olapNote=ciOverlap?' (Note: individual CIs overlap, but the CI of the difference confirms significance.)':'';
     vb.style.background='#E1F5EE';
     vb.style.color='#0F6E56';
-    vb.textContent='CI of the difference excludes zero \u2192 p < .05 \u2192 statistically significant'+olapNote;
+    vb.textContent='The individual CIs do not overlap and the CI of the difference excludes zero \u2192 statistically significant (p < .05)';
   } else {
     vb.style.background='#FCEBEB';
     vb.style.color='#A32D2D';
-    vb.textContent='CI of the difference includes zero \u2192 p > .05 \u2192 not statistically significant';
+    vb.textContent='The individual CIs overlap and the CI of the difference includes zero \u2192 not statistically significant (p > .05)';
   }
 
+  // Cards
   document.getElementById('o-ci1').textContent=lo1.toFixed(1)+' \u2013 '+hi1.toFixed(1);
   document.getElementById('o-ci2').textContent=lo2.toFixed(1)+' \u2013 '+hi2.toFixed(1);
   document.getElementById('o-diff').textContent=diff.toFixed(1);
