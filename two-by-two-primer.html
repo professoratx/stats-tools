@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>How do researchers turn a 2×2 table into statistics?</title>
+<title>How do researchers turn a 2×2 table into epidemiological values?</title>
 <style>
 :root {
   --navy: #172940;
@@ -141,6 +141,12 @@ h1 { color: var(--navy); font-size: 1.85rem; font-weight: bold; margin-bottom: 8
 .or-legend-item { display: flex; align-items: center; gap: 5px; }
 .or-legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; }
 
+/* Scenario toggle */
+.scenario-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+.scenario-btn { font-family: Calibri, 'Trebuchet MS', sans-serif; font-size: 0.88rem; padding: 9px 18px; border: 2px solid var(--navy); border-radius: 8px; background: var(--white); color: var(--navy); cursor: pointer; font-weight: bold; transition: all 0.2s; }
+.scenario-btn:hover { background: #E8EBF0; }
+.scenario-btn.active { background: var(--navy); color: var(--white); }
+
 /* Next step */
 .next-box { background: var(--navy); color: var(--white); border-radius: 10px; padding: 20px 24px; margin-top: 20px; text-align: center; font-size: 0.95rem; line-height: 1.65; }
 .next-box strong { color: #FFC857; }
@@ -160,7 +166,7 @@ h1 { color: var(--navy); font-size: 1.85rem; font-weight: bold; margin-bottom: 8
 <body>
 <div class="container">
 
-<h1>How do researchers turn a 2x2 table into statistics?</h1>
+<h1>How do researchers turn a 2x2 table into epidemiological values?</h1>
 <p class="subtitle">Every epidemiological statistic you'll encounter in a journal article — RR, ARR, NNT, OR — comes from the same simple table. Click a statistic below to see which cells it uses, then try changing the numbers.</p>
 
 <div class="instructions"><strong>How to use this tool:</strong> Read the scenario, then click any of the four statistic cards below the table. The cells used in that calculation will light up, and the formula and result will appear. You can also edit the numbers in the table to see how each statistic changes.</div>
@@ -176,7 +182,12 @@ h1 { color: var(--navy); font-size: 1.85rem; font-weight: bold; margin-bottom: 8
 </div>
 
 <div class="card">
-  <div class="scenario-box">
+  <div class="scenario-bar">
+    <button class="scenario-btn active" id="scenSmoke" onclick="loadScenario('smoke')">Smoking &amp; Lung Cancer</button>
+    <button class="scenario-btn" id="scenFree" onclick="loadScenario('free')">Free Play</button>
+  </div>
+
+  <div class="scenario-box" id="scenarioBox">
     A large cohort study followed <strong>1,000 adults</strong> over 20 years to determine whether <strong>smoking</strong> is associated with developing <strong>lung cancer</strong>. Half of the participants were smokers and half were non-smokers at baseline.
     <div class="table-intro">Below depicts the 2x2 table for this study:</div>
     <div class="table-intro-detail">The two <strong>groups</strong> (rows): <span class="lbl-g1">Smokers</span> and <span class="lbl-g2">Non-smokers</span><br>The two <strong>outcomes</strong> (columns): Developed Lung Cancer and No Lung Cancer</div>
@@ -190,17 +201,17 @@ h1 { color: var(--navy); font-size: 1.85rem; font-weight: bold; margin-bottom: 8
     <table class="tbl">
       <thead>
         <tr><th class="corner"></th><th colspan="2" class="tbl-axis" style="text-align:center;padding:2px 0 0;border:none;background:transparent;">OUTCOME &#8594;</th><th class="corner"></th></tr>
-        <tr><th class="corner tbl-axis" style="text-align:center;vertical-align:middle;">GROUP<br>&#8595;</th><th class="col-pos">Developed<br>Lung Cancer</th><th class="col-neg">No Lung<br>Cancer</th><th class="col-total">Total</th></tr>
+        <tr><th class="corner tbl-axis" style="text-align:center;vertical-align:middle;">GROUP<br>&#8595;</th><th class="col-pos" id="colPos">Developed<br>Lung Cancer</th><th class="col-neg" id="colNeg">No Lung<br>Cancer</th><th class="col-total">Total</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td class="row-g1">Smokers</td>
+          <td class="row-g1" id="rowG1">Smokers</td>
           <td class="data-cell" id="cellA"><span class="cell-label">A</span><input type="number" id="vA" value="80" min="0" max="9999" oninput="recalc()"></td>
           <td class="data-cell" id="cellB"><span class="cell-label">B</span><input type="number" id="vB" value="420" min="0" max="9999" oninput="recalc()"></td>
           <td class="total-cell" id="totalN1"><span style="display:block;font-size:0.62rem;color:var(--gray-lt);font-weight:bold;letter-spacing:0.5px;">N1</span>500</td>
         </tr>
         <tr>
-          <td class="row-g2">Non-smokers</td>
+          <td class="row-g2" id="rowG2">Non-smokers</td>
           <td class="data-cell" id="cellC"><span class="cell-label">C</span><input type="number" id="vC" value="20" min="0" max="9999" oninput="recalc()"></td>
           <td class="data-cell" id="cellD"><span class="cell-label">D</span><input type="number" id="vD" value="480" min="0" max="9999" oninput="recalc()"></td>
           <td class="total-cell" id="totalN2"><span style="display:block;font-size:0.62rem;color:var(--gray-lt);font-weight:bold;letter-spacing:0.5px;">N2</span>500</td>
@@ -248,6 +259,67 @@ h1 { color: var(--navy); font-size: 1.85rem; font-weight: bold; margin-bottom: 8
 
 <script>
 var active = null;
+var currentScenario = "smoke";
+
+var scenarios = {
+  smoke: {
+    box: 'A large cohort study followed <strong>1,000 adults</strong> over 20 years to determine whether <strong>smoking</strong> is associated with developing <strong>lung cancer</strong>. Half of the participants were smokers and half were non-smokers at baseline.<div class="table-intro">Below depicts the 2x2 table for this study:</div><div class="table-intro-detail">The two <strong>groups</strong> (rows): <span class="lbl-g1">Smokers</span> and <span class="lbl-g2">Non-smokers</span><br>The two <strong>outcomes</strong> (columns): Developed Lung Cancer and No Lung Cancer</div><div class="od-intro">For this study, researchers defined:</div><div class="od-item"><span class="od-pos">Developed Lung Cancer</span> = confirmed diagnosis during the 20-year follow-up</div><div class="od-item"><span class="od-neg">No Lung Cancer</span> = no diagnosis during the follow-up period</div>',
+    g1: "Smokers", g2: "Non-smokers",
+    colPos: "Developed<br>Lung Cancer", colNeg: "No Lung<br>Cancer",
+    a: 80, b: 420, c: 20, d: 480,
+    g1Label: "Smokers", g2Label: "non-smokers",
+    rrHigh: "Smokers had a higher rate of lung cancer.",
+    rrLow: "Smokers had a lower rate of lung cancer.",
+    arrText: function(n) { return "<strong>" + n + " more per 100</strong> developed lung cancer among smokers vs. non-smokers."; },
+    nntText: function(n) { return "For every <strong>" + n + " smokers</strong>, one additional person develops lung cancer compared to non-smokers."; },
+    orHigh: "Smokers had higher odds of lung cancer.",
+    orLow: "Smokers had lower odds of lung cancer."
+  },
+  free: {
+    box: '<strong>Free Play:</strong> Enter your own numbers in the 2\u00D72 table below. Use this mode to test any scenario \u2014 plug in numbers from a journal article, a class assignment, or an experiment of your own. The four statistic cards will calculate and interpret the values for whatever numbers you enter.<div class="table-intro" style="margin-top:10px;">The 2\u00D72 table represents:</div><div class="table-intro-detail">The two <strong>groups</strong> (rows): <span class="lbl-g1">Group 1</span> (e.g., treatment, exposed) and <span class="lbl-g2">Group 2</span> (e.g., control, unexposed)<br>The two <strong>outcomes</strong> (columns): Outcome Present and Outcome Absent</div>',
+    g1: "Group 1", g2: "Group 2",
+    colPos: "Outcome<br>Present", colNeg: "Outcome<br>Absent",
+    a: 55, b: 45, c: 25, d: 75,
+    g1Label: "Group 1", g2Label: "Group 2",
+    rrHigh: "Group 1 had a higher rate of the outcome.",
+    rrLow: "Group 1 had a lower rate of the outcome.",
+    arrText: function(n) { return "<strong>" + n + " more per 100</strong> experienced the outcome in Group 1 vs. Group 2."; },
+    nntText: function(n) { return "For every <strong>" + n + " patients</strong> in Group 1, one additional person experiences the outcome compared to Group 2."; },
+    orHigh: "Group 1 had higher odds of the outcome.",
+    orLow: "Group 1 had lower odds of the outcome."
+  }
+};
+
+function loadScenario(key) {
+  currentScenario = key;
+  var s = scenarios[key];
+
+  // Toggle buttons
+  document.getElementById("scenSmoke").classList.toggle("active", key === "smoke");
+  document.getElementById("scenFree").classList.toggle("active", key === "free");
+
+  // Update scenario box
+  document.getElementById("scenarioBox").innerHTML = s.box;
+
+  // Update table labels
+  document.getElementById("colPos").innerHTML = s.colPos;
+  document.getElementById("colNeg").innerHTML = s.colNeg;
+  document.getElementById("rowG1").textContent = s.g1;
+  document.getElementById("rowG2").textContent = s.g2;
+
+  // Update cell values
+  document.getElementById("vA").value = s.a;
+  document.getElementById("vB").value = s.b;
+  document.getElementById("vC").value = s.c;
+  document.getElementById("vD").value = s.d;
+
+  // Reset state
+  active = null;
+  clearHighlights();
+  document.getElementById("resultPrompt").style.display = "block";
+  document.getElementById("resultContent").style.display = "none";
+  recalc();
+}
 
 function toggleDef(id) { document.getElementById(id).classList.toggle("open"); }
 
@@ -288,6 +360,7 @@ function showStat(key, isRecalc) {
   var n1 = a + b, n2 = c + d;
   var r1 = n1 > 0 ? a / n1 : 0;
   var r2 = n2 > 0 ? c / n2 : 0;
+  var s = scenarios[currentScenario];
 
   var cardMap = {rr: "scRR", arr: "scARR", nnt: "scNNT", or: "scOR"};
   var cardClasses = {rr: "active-rr", arr: "active-arr", nnt: "active-nnt", or: "active-or"};
@@ -306,10 +379,10 @@ function showStat(key, isRecalc) {
     var rr = r2 > 0 ? r1 / r2 : null;
     var rrDisp = rr !== null ? rr.toFixed(2) : "---";
     var interpText = "";
-    if (rr === null) interpText = "Cannot compute — comparison group rate is 0%.";
+    if (rr === null) interpText = "Cannot compute \u2014 comparison group rate is 0%.";
     else if (r1 === r2) interpText = "<strong>RR = 1.0:</strong> No difference between groups.";
-    else if (rr > 1) interpText = "<strong>RR > 1:</strong> Smokers had a higher rate of lung cancer.";
-    else interpText = "<strong>RR < 1:</strong> Smokers had a lower rate of lung cancer.";
+    else if (rr > 1) interpText = "<strong>RR > 1:</strong> " + s.rrHigh;
+    else interpText = "<strong>RR < 1:</strong> " + s.rrLow;
 
     html = '<div class="result-metric rm-rr"><div class="rm-label">Relative Risk (RR)</div><div class="rm-value v-rr">' + rrDisp + '</div>' +
       '<div class="rm-formula">RR = (<strong>A</strong> / N1) &#247; (<strong>C</strong> / N2) = (' + a + ' / ' + n1 + ') &#247; (' + c + ' / ' + n2 + ')</div></div>' +
@@ -327,7 +400,7 @@ function showStat(key, isRecalc) {
     var arrDisp = (arr * 100).toFixed(1) + "%";
     var interpText = "";
     if (r1 === r2) interpText = "<strong>ARR = 0%:</strong> No difference between groups.";
-    else interpText = "<strong>" + Math.round(arr * 100) + " more per 100</strong> developed lung cancer among smokers vs. non-smokers.";
+    else interpText = s.arrText(Math.round(arr * 100));
 
     html = '<div class="result-metric rm-arr"><div class="rm-label">Absolute Risk Reduction (ARR)</div><div class="rm-value v-arr">' + arrDisp + '</div>' +
       '<div class="rm-formula">ARR = | <strong>A</strong>/N1 &#8722; <strong>C</strong>/N2 | = | ' + a + '/' + n1 + ' &#8722; ' + c + '/' + n2 + ' |</div></div>' +
@@ -345,8 +418,8 @@ function showStat(key, isRecalc) {
     var nnt = arr > 0 ? Math.ceil(1 / arr) : null;
     var nntDisp = nnt !== null ? nnt.toString() : "---";
     var interpText = "";
-    if (nnt === null) interpText = "No difference between groups — NNH does not apply.";
-    else interpText = "For every <strong>" + nnt + " smokers</strong>, one additional person develops lung cancer compared to non-smokers.";
+    if (nnt === null) interpText = "No difference between groups \u2014 NNT/NNH does not apply.";
+    else interpText = s.nntText(nnt);
 
     html = '<div class="result-metric rm-nnt"><div class="rm-label">Number Needed to Harm (NNH)</div><div class="rm-value v-nnt">' + nntDisp + '</div>' +
       '<div class="rm-formula">NNH = 1 &#247; ARR = 1 &#247; ' + (arr > 0 ? (arr * 100).toFixed(1) + "%" : "0") + '</div></div>' +
@@ -361,10 +434,10 @@ function showStat(key, isRecalc) {
     var orVal = (b > 0 && c > 0) ? (a * d) / (b * c) : null;
     var orDisp = orVal !== null ? orVal.toFixed(2) : "---";
     var interpText = "";
-    if (orVal === null) interpText = "Cannot compute — a cell is zero.";
+    if (orVal === null) interpText = "Cannot compute \u2014 a cell is zero.";
     else if (r1 === r2) interpText = "<strong>OR = 1.0:</strong> No difference between groups.";
-    else if (orVal > 1) interpText = "<strong>OR > 1:</strong> Smokers had higher odds of lung cancer.";
-    else interpText = "<strong>OR < 1:</strong> Smokers had lower odds of lung cancer.";
+    else if (orVal > 1) interpText = "<strong>OR > 1:</strong> " + s.orHigh;
+    else interpText = "<strong>OR < 1:</strong> " + s.orLow;
 
     html = '<div class="result-metric rm-or"><div class="rm-label">Odds Ratio (OR)</div><div class="rm-value v-or">' + orDisp + '</div>' +
       '<div class="rm-formula">OR = (<strong>A</strong> &#215; <strong>D</strong>) &#247; (<strong>B</strong> &#215; <strong>C</strong>) = (' + a + ' &#215; ' + d + ') &#247; (' + b + ' &#215; ' + c + ')</div></div>' +
