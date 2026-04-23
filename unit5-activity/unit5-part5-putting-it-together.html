@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Part 5: Putting It Together — Unit 5 Activity</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Calibri, 'Trebuchet MS', sans-serif; background: #F0F3F5; color: #616467; line-height: 1.6; }
+.top-bar { background: #172940; color: white; display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; position: sticky; top: 0; z-index: 100; }
+.top-bar a { color: #8B9098; text-decoration: none; font-size: 13px; font-weight: 700; }
+.top-bar a:hover { color: #FFFFFF; }
+.top-bar-title { font-size: 14px; font-weight: 700; color: #FFFFFF; }
+.top-bar-progress { font-size: 12px; color: #8B9098; }
+.progress-dots { display: flex; justify-content: center; gap: 8px; padding: 16px 0 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #DEE2E6; }
+.dot.active { background: #2E8FAF; }
+.dot.done { background: #2D8659; }
+.container { max-width: 760px; margin: 0 auto; padding: 20px 16px 40px; }
+.card { background: #FFFFFF; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 28px 24px; margin-bottom: 20px; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+h2 { color: #172940; font-size: 1.3rem; margin-bottom: 12px; }
+.orientation { background: #E5F3F8; color: #1A5A6E; border-radius: 10px; padding: 18px 22px; margin-bottom: 20px; font-size: 0.93rem; line-height: 1.65; }
+.orientation strong { color: #172940; }
+.tool-frame-wrap { background: #FFFFFF; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 20px; overflow: hidden; }
+.tool-frame-header { background: #172940; color: #FFFFFF; padding: 10px 18px; font-size: 0.85rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+.tool-frame-header a { color: #8B9098; font-size: 0.78rem; text-decoration: none; }
+.tool-frame-header a:hover { color: #FFFFFF; }
+.tool-frame { width: 100%; height: 750px; border: none; background: #F0F3F5; }
+.tool-fallback { display: none; text-align: center; padding: 40px 20px; color: #8B9098; font-size: 0.9rem; }
+.tool-fallback a { color: #2E8FAF; font-weight: 700; }
+.question-section { display: none; }
+.question-section.visible { display: block; animation: fadeIn 0.4s ease; }
+.q-card { background: #FFFFFF; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 24px 22px; margin-bottom: 16px; border-left: 4px solid #2E8FAF; }
+.q-num { font-size: 0.78rem; color: #8B9098; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.q-stem { font-size: 0.95rem; color: #172940; font-weight: 600; margin-bottom: 14px; line-height: 1.55; }
+.q-instruction { font-size: 0.85rem; color: #2E8FAF; font-style: italic; margin-bottom: 12px; }
+.mc-option { display: block; width: 100%; text-align: left; font-family: Calibri, 'Trebuchet MS', sans-serif; font-size: 0.9rem; padding: 11px 14px; margin-bottom: 6px; background: #F8F9FA; border: 2px solid #DEE2E6; border-radius: 8px; cursor: pointer; color: #172940; transition: all 0.2s; line-height: 1.45; }
+.mc-option:hover:not(.answered) { border-color: #2E8FAF; background: #E5F3F8; }
+.mc-option.correct { border-color: #2D8659; background: #E1F5EE; color: #085041; cursor: default; }
+.mc-option.incorrect { border-color: #C0504D; background: #FDECEC; color: #8B2020; cursor: default; }
+.mc-option.dimmed { opacity: 0.45; cursor: default; }
+.mc-option.reveal { border-color: #2D8659; background: #E1F5EE; color: #085041; cursor: default; opacity: 1; }
+.q-feedback { display: none; border-radius: 8px; padding: 14px 16px; margin-top: 12px; font-size: 0.88rem; line-height: 1.6; }
+.q-feedback.show-correct { display: block; background: #E1F5EE; color: #085041; border-left: 4px solid #2D8659; }
+.q-feedback.show-incorrect { display: block; background: #FDECEC; color: #8B2020; border-left: 4px solid #C0504D; }
+.next-q-btn { font-family: Calibri, 'Trebuchet MS', sans-serif; font-size: 0.9rem; font-weight: 700; padding: 10px 20px; background: #2E8FAF; color: #FFFFFF; border: none; border-radius: 8px; cursor: pointer; margin-top: 12px; display: none; }
+.next-q-btn:hover { background: #247A96; }
+
+/* Post-ratings */
+.rating-item { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.rating-label { flex: 1; min-width: 200px; font-size: 0.88rem; color: #172940; font-weight: 600; }
+.rating-slider-wrap { display: flex; align-items: center; gap: 8px; }
+.rating-slider { width: 140px; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
+.rating-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #C0504D 0%, #E08B52 30%, #2E8FAF 60%, #2D8659 100%); }
+.rating-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #172940; border: 3px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.2); margin-top: -7px; cursor: pointer; }
+.rating-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #172940; border: 3px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.2); cursor: pointer; }
+.rating-val { width: 36px; text-align: center; font-size: 1.1rem; font-weight: 700; color: #172940; }
+.rating-delta { font-size: 0.82rem; font-weight: 700; margin-left: 4px; }
+.rating-delta.up { color: #2D8659; }
+.rating-delta.same { color: #8B9098; }
+.rating-delta.down { color: #C0504D; }
+
+/* Certificate */
+.cert-wrapper { display: none; }
+.cert-wrapper.visible { display: block; animation: fadeIn 0.6s ease; }
+
+.cert-card {
+  background: #FFFFFF;
+  border: 3px solid #172940;
+  border-radius: 16px;
+  padding: 40px 36px;
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.cert-header-bar { background: #172940; color: #FFFFFF; padding: 8px 16px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; display: inline-block; margin-bottom: 16px; }
+.cert-title { font-size: 1.5rem; font-weight: 700; color: #172940; margin-bottom: 4px; }
+.cert-subtitle { font-size: 0.95rem; color: #616467; margin-bottom: 20px; }
+.cert-name { font-size: 1.8rem; font-weight: 700; color: #2E8FAF; margin-bottom: 4px; }
+.cert-date { font-size: 0.88rem; color: #8B9098; margin-bottom: 20px; }
+.cert-scores { text-align: left; max-width: 420px; margin: 0 auto 20px; }
+.cert-score-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #F0F3F5; font-size: 0.85rem; }
+.cert-score-label { color: #172940; font-weight: 600; }
+.cert-score-vals { display: flex; gap: 12px; align-items: center; }
+.cert-pre { color: #8B9098; }
+.cert-post { color: #172940; font-weight: 700; }
+.cert-arrow { font-weight: 700; }
+.cert-arrow.up { color: #2D8659; }
+.cert-arrow.same { color: #8B9098; }
+.cert-footer { font-size: 0.78rem; color: #8B9098; margin-top: 16px; border-top: 2px solid #172940; padding-top: 12px; }
+
+.download-section { text-align: center; margin-top: 20px; }
+.download-btn { font-family: Calibri, 'Trebuchet MS', sans-serif; font-size: 1.05rem; font-weight: 700; padding: 14px 36px; background: #2D8659; color: #FFFFFF; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+.download-btn:hover { background: #236B47; }
+.download-fallback { font-size: 0.85rem; color: #8B9098; margin-top: 10px; }
+
+.footer { text-align: center; padding: 20px 16px; font-size: 12px; color: #8B9098; }
+.gate-message { text-align: center; padding: 60px 20px; }
+.gate-message h2 { margin-bottom: 12px; }
+.gate-message a { color: #2E8FAF; font-weight: 700; text-decoration: none; }
+
+.phase { display: none; }
+.phase.visible { display: block; animation: fadeIn 0.4s ease; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="index.html">← Activity Hub</a>
+  <span class="top-bar-title">Part 5 of 5</span>
+  <span class="top-bar-progress">~10 min</span>
+</div>
+
+<div class="progress-dots">
+  <div class="dot done"></div>
+  <div class="dot done"></div>
+  <div class="dot done"></div>
+  <div class="dot done"></div>
+  <div class="dot active"></div>
+</div>
+
+<div class="container" id="mainContent">
+
+  <!-- PHASE 1: Tool + Questions -->
+  <div class="phase visible" id="phase1">
+
+    <div class="orientation">
+      <strong>What you're looking at:</strong> This tool brings everything together. Select a clinical scenario, enter data into a 2×2 table, and explore RR, OR, ARR, and NNT one at a time — with interpretation questions at each step. The NNT Waiting Room at the end visualizes exactly how many patients you'd need to treat for one additional patient to benefit. Start with the "AUD: Hearing Amplification" scenario, which closely mirrors the mock article.
+    </div>
+
+    <div class="tool-frame-wrap">
+      <div class="tool-frame-header">
+        <span>What do these numbers actually mean for your patients?</span>
+        <a href="../tool3_guided_exploration.html" target="_blank">Open in new tab ↗</a>
+      </div>
+      <iframe class="tool-frame" id="toolFrame" src="../tool3_guided_exploration.html" loading="lazy"></iframe>
+      <div class="tool-fallback" id="toolFallback">The tool didn't load. <a href="../tool3_guided_exploration.html" target="_blank">Open it directly here</a>.</div>
+    </div>
+
+    <div class="card">
+      <h2>Questions</h2>
+      <p style="font-size:0.88rem; color:#8B9098; margin-bottom:16px;">Work through the tool's guided walkthrough first, then answer these questions.</p>
+      <div id="questionsArea"></div>
+    </div>
+
+    <div class="question-section" id="toPhase2Section">
+      <div style="text-align:center;">
+        <button class="next-q-btn" style="display:inline-block; font-size:1rem; padding:14px 32px;" onclick="showPhase2()">Continue to Post-Assessment →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 2: Post-ratings -->
+  <div class="phase" id="phase2">
+    <div class="card">
+      <h2>Re-Read the Mock Article</h2>
+      <p style="font-size:0.93rem; margin-bottom:12px;">Think back to the mock article you read in Part 1. The early amplification group was 2.20 times as likely to improve (RR = 2.20), the odds were 3.67 times higher (OR = 3.67), the absolute gap was 30 percentage points (ARR = 30%), and the NNT was 4. You now understand what every one of those numbers means and why the OR is larger than the RR.</p>
+    </div>
+
+    <div class="card">
+      <h2>Re-Rate Your Confidence</h2>
+      <p style="font-size:0.88rem; color:#8B9098; margin-bottom:16px;">Same scale as before: 0 = not at all comfortable, 10 = completely comfortable.</p>
+      <div id="postRatingsContainer"></div>
+      <div style="text-align:center; margin-top:20px;">
+        <button class="next-q-btn" style="display:inline-block; font-size:1rem; padding:14px 32px; background:#2D8659;" onclick="generateCertificate()">Generate My Certificate →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 3: Certificate -->
+  <div class="phase" id="phase3">
+    <div class="cert-wrapper visible">
+      <div class="cert-card" id="certCard">
+        <div class="cert-header-bar">Certificate of Completion</div>
+        <div class="cert-title">Unit 5: Interpreting Epidemiological Studies</div>
+        <div class="cert-subtitle">Interactive Exploration Activity</div>
+        <div class="cert-name" id="certName"></div>
+        <div class="cert-date" id="certDate"></div>
+        <div class="cert-scores" id="certScores"></div>
+        <div class="cert-footer">ASHS 6400: Methods of Data Analysis &bull; A.T. Still University<br>Dr. Lam's Stats Arcade</div>
+      </div>
+    </div>
+
+    <div class="download-section">
+      <button class="download-btn" id="downloadBtn" onclick="downloadCert()">Download Certificate (PNG)</button>
+      <div class="download-fallback">If the download doesn't work, take a screenshot of the certificate above and upload that to Canvas.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">ASHS 6400: Methods of Data Analysis &bull; A.T. Still University</div>
+
+<script>
+// Gate check
+if (sessionStorage.getItem("u5_part4_done") !== "true") {
+  document.getElementById("mainContent").innerHTML = '<div class="gate-message"><h2>Complete Part 4 first</h2><p><a href="unit5-part4-odds-ratio.html">Go to Part 4</a></p></div>';
+}
+
+var frameTimer = setTimeout(function() { document.getElementById("toolFallback").style.display = "block"; }, 8000);
+document.getElementById("toolFrame").onload = function() { clearTimeout(frameTimer); };
+
+// Rating labels/keys (must match Part 1)
+var ratingLabels = [
+  "The results narrative",
+  "Table 3 (outcome summary table)",
+  "Relative Risk (RR) and its CI",
+  "Odds Ratio (OR) and its CI",
+  "Absolute Risk Reduction (ARR)",
+  "Number Needed to Treat (NNT)",
+  "Overall confidence"
+];
+var ratingKeys = ["narrative","table","rr","or","arr","nnt","overall"];
+
+var questions = [
+  {
+    stem: "Select the \"AUD: Hearing Amplification\" scenario and click Calculate. The RR is approximately 2.17. What does this mean?",
+    instruction: "Work through the RR card in the tool first.",
+    options: [
+      "Patients receiving early amplification were 2.17 times as likely to achieve meaningful communication improvement",
+      "Exactly 2.17 patients improved in the treatment group",
+      "The treatment caused a 2.17% increase in the outcome",
+      "The study found a 2.17-point difference on the hearing scale"
+    ],
+    correct: 0,
+    feedback: "RR = 2.17 means the rate of improvement was 2.17 times higher in the amplification group. It's a ratio of rates — not points, not percentages, not patient counts. The mock article's RR of 2.20 carries the same interpretation."
+  },
+  {
+    stem: "Select \"Free Play\" and enter the mock article's exact numbers: A = 55, B = 45, C = 25, D = 75. Click Calculate. What is the NNT?",
+    instruction: "Enter the numbers and check the NNT card.",
+    options: [
+      "NNT = 2",
+      "NNT = 7",
+      "NNT = 10",
+      "NNT = 4"
+    ],
+    correct: 3,
+    feedback: "With 55% vs. 25%, ARR = 30%, NNT = ceil(1 ÷ 0.30) ≈ 4. This matches Table 3 exactly. You've confirmed the article's result by entering the raw data yourself. NNT = 4: for every 4 patients fitted early, 1 additional patient improves."
+  },
+  {
+    stem: "In the NNT Waiting Room for the mock article scenario (NNT = 4), there are 4 figures with the last one in green. What do the 3 gray figures represent?",
+    instruction: "Look at the waiting room after completing all 4 cards.",
+    options: [
+      "Patients who were harmed by the treatment",
+      "Patients who dropped out of the study",
+      "Patients who would have had the same outcome regardless of group assignment",
+      "Patients who need additional sessions"
+    ],
+    correct: 2,
+    feedback: "The gray figures would have improved (or not) regardless. Only the green figure benefits specifically because of the treatment. NNT = 4 doesn't mean \"4 patients improve\" — it means \"4 are treated, and 1 improves beyond what would have happened anyway.\""
+  },
+  {
+    stem: "Select the \"OT: Ergonomic Program\" scenario. The RR is 0.60. What does an RR below 1.0 mean when the outcome is harmful (developing a complaint)?",
+    instruction: "Notice this scenario's outcome is something bad.",
+    options: [
+      "The treatment was ineffective because RR is less than 1.0",
+      "The intervention increased risk by 40%",
+      "60% of workers developed a complaint",
+      "The intervention group was only 0.60 times as likely to develop the complaint — a protective effect"
+    ],
+    correct: 3,
+    feedback: "When the outcome is negative, RR < 1.0 is good news. RR = 0.60 means the intervention group had only 60% of the complaint risk — a 40% reduction. For benefit outcomes, you want RR > 1; for harm outcomes, you want RR < 1. The mock article's outcome is positive (improvement), so RR = 2.20 > 1 is favorable."
+  },
+  {
+    stem: "Select \"Free Play\" and enter: A = 20, B = 980, C = 10, D = 990. The RR is 2.00 — the same direction as the mock article's 2.20. But what is the NNT?",
+    instruction: "Enter these numbers and compare to the article's NNT of 4.",
+    options: [
+      "NNT = 4, similar to the article",
+      "NNT = 100 — 99 out of 100 patients get no benefit",
+      "NNT = 20",
+      "NNT = 10"
+    ],
+    correct: 1,
+    feedback: "Both scenarios have RR ≈ 2.0, but NNT = 100 vs. the article's NNT = 4. At 2% vs. 1%, the absolute gap is only 1 percentage point. This is the fundamental lesson: the same relative risk can describe vastly different real-world impacts. Always check the NNT."
+  },
+  {
+    stem: "A journal article reports: RR = 1.45 (95% CI: 0.88 to 2.14). Based on the confidence interval, is this result statistically significant?",
+    instruction: "Think about what it means when a CI crosses the null value.",
+    options: [
+      "Yes — the RR is greater than 1.0, so the treatment works",
+      "No — the CI crosses 1.0, meaning the true effect could be zero or even reversed",
+      "Significance cannot be determined from a confidence interval",
+      "Yes — the CI is narrow, indicating high precision"
+    ],
+    correct: 1,
+    feedback: "The CI (0.88–2.14) crosses 1.0. This means the true RR could be below 1.0 (treatment is worse), exactly 1.0 (no effect), or above 1.0 (treatment helps). Compare to the mock article's CI (1.52–3.19), which stays above 1.0 — that result IS significant. A CI crossing the null value = not significant."
+  },
+  {
+    stem: "Thinking about everything you've learned: why does the mock article report four different statistics (RR, OR, ARR, NNT) instead of just one?",
+    instruction: "This is the big-picture question. Think about what each one tells you that the others don't.",
+    options: [
+      "Journals require all four by convention — they all say the same thing",
+      "Each tells a different part of the clinical story: RR shows the rate comparison, OR is needed for certain study designs, ARR shows the actual gap, and NNT translates the effect into a per-patient decision-making number",
+      "Only the RR matters — the others are redundant",
+      "Different readers prefer different statistics, so authors include all to be safe"
+    ],
+    correct: 1,
+    feedback: "Each measure serves a distinct purpose. RR tells you how much more likely the outcome is. OR is needed for case-control studies and logistic regression. ARR tells you the real-world size of the benefit gap. NNT translates everything into the number a clinician needs at the bedside: \"How many do I treat for one to benefit?\" Together, they give you the complete picture. Alone, any one of them can be misleading."
+  }
+];
+
+var answered = [];
+
+function renderQuestions() {
+  var html = "";
+  for (var i = 0; i < questions.length; i++) {
+    var q = questions[i];
+    html += '<div class="question-section '+(i===0?"visible":"")+'" id="q'+i+'"><div class="q-card"><div class="q-num">Question '+(i+1)+' of '+questions.length+'</div>';
+    if (q.instruction) html += '<div class="q-instruction">'+q.instruction+'</div>';
+    html += '<div class="q-stem">'+q.stem+'</div>';
+    for (var j = 0; j < q.options.length; j++) {
+      html += '<button class="mc-option" id="q'+i+'o'+j+'" onclick="answer('+i+','+j+')">'+String.fromCharCode(65+j)+') '+q.options[j]+'</button>';
+    }
+    html += '<div class="q-feedback" id="q'+i+'fb"></div>';
+    html += '<button class="next-q-btn" id="q'+i+'next" onclick="'+(i<questions.length-1?'showNext('+i+')':'showPostSection()')+'">'+(i<questions.length-1?'Next Question →':'Continue to Post-Assessment →')+'</button>';
+    html += '</div></div>';
+  }
+  document.getElementById("questionsArea").innerHTML = html;
+}
+
+function answer(qi, oi) {
+  if (answered.indexOf(qi) !== -1) return;
+  answered.push(qi);
+  var q = questions[qi], isCorrect = (oi === q.correct), fb = document.getElementById("q"+qi+"fb");
+  for (var j = 0; j < q.options.length; j++) {
+    var btn = document.getElementById("q"+qi+"o"+j);
+    btn.classList.add("answered");
+    if (j===oi&&isCorrect) btn.classList.add("correct");
+    else if (j===oi) btn.classList.add("incorrect");
+    else if (j===q.correct&&!isCorrect) btn.classList.add("reveal");
+    else btn.classList.add("dimmed");
+  }
+  fb.className = "q-feedback "+(isCorrect?"show-correct":"show-incorrect");
+  fb.innerHTML = (isCorrect?"<strong>Correct!</strong> ":"<strong>Not quite.</strong> ")+q.feedback;
+  document.getElementById("q"+qi+"next").style.display = "inline-block";
+  var ans = JSON.parse(sessionStorage.getItem("u5_answers")||"{}");
+  ans["p5q"+(qi+1)] = {selected:oi,correct:q.correct,right:isCorrect};
+  sessionStorage.setItem("u5_answers",JSON.stringify(ans));
+  setTimeout(function(){fb.scrollIntoView({behavior:"smooth",block:"nearest"});},200);
+}
+
+function showNext(qi) {
+  document.getElementById("q"+(qi+1)).classList.add("visible");
+  setTimeout(function(){document.getElementById("q"+(qi+1)).scrollIntoView({behavior:"smooth",block:"start"});},100);
+}
+
+function showPostSection() {
+  document.getElementById("toPhase2Section").classList.add("visible");
+  setTimeout(function(){document.getElementById("toPhase2Section").scrollIntoView({behavior:"smooth",block:"center"});},100);
+}
+
+function showPhase2() {
+  document.getElementById("phase1").classList.remove("visible");
+  document.getElementById("phase1").style.display = "none";
+  document.getElementById("phase2").classList.add("visible");
+  window.scrollTo({top:0,behavior:"smooth"});
+  buildPostRatings();
+}
+
+function buildPostRatings() {
+  var pre = JSON.parse(sessionStorage.getItem("u5_pre_ratings")||"{}");
+  var container = document.getElementById("postRatingsContainer");
+  var html = "";
+  for (var i = 0; i < ratingLabels.length; i++) {
+    var key = ratingKeys[i];
+    var preVal = pre[key] !== undefined ? pre[key] : "?";
+    html += '<div class="rating-item">' +
+      '<div class="rating-label">' + ratingLabels[i] + ' <span style="font-size:0.78rem;color:#8B9098;">(pre: '+preVal+')</span></div>' +
+      '<div class="rating-slider-wrap">' +
+      '<span style="font-size:0.75rem;color:#8B9098;">0</span>' +
+      '<input type="range" class="rating-slider" id="post_'+key+'" min="0" max="10" value="'+(preVal!=="?"?Math.min(preVal+2,10):7)+'" oninput="updatePostVal(this)">' +
+      '<span style="font-size:0.75rem;color:#8B9098;">10</span>' +
+      '<span class="rating-val" id="postval_'+key+'">'+(preVal!=="?"?Math.min(preVal+2,10):7)+'</span>' +
+      '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function updatePostVal(slider) {
+  var key = slider.id.replace("post_","");
+  document.getElementById("postval_"+key).textContent = slider.value;
+}
+
+function generateCertificate() {
+  // Save post ratings
+  var postRatings = {};
+  for (var i = 0; i < ratingKeys.length; i++) {
+    var slider = document.getElementById("post_"+ratingKeys[i]);
+    postRatings[ratingKeys[i]] = parseInt(slider.value);
+  }
+  sessionStorage.setItem("u5_post_ratings", JSON.stringify(postRatings));
+  sessionStorage.setItem("u5_part5_done","true");
+
+  // Build certificate
+  var name = sessionStorage.getItem("u5_name") || "Student";
+  var pre = JSON.parse(sessionStorage.getItem("u5_pre_ratings")||"{}");
+  var post = postRatings;
+  var now = new Date();
+  var dateStr = now.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+
+  document.getElementById("certName").textContent = name;
+  document.getElementById("certDate").textContent = "Completed " + dateStr;
+
+  var scoresHtml = "";
+  for (var i = 0; i < ratingKeys.length; i++) {
+    var key = ratingKeys[i];
+    var preV = pre[key] !== undefined ? pre[key] : "—";
+    var postV = post[key] !== undefined ? post[key] : "—";
+    var delta = (typeof preV === "number" && typeof postV === "number") ? postV - preV : 0;
+    var arrowText = delta > 0 ? ("↑" + delta) : (delta === 0 ? "—" : "↓" + Math.abs(delta));
+    var arrowClass = delta > 0 ? "up" : "same";
+    scoresHtml += '<div class="cert-score-row"><span class="cert-score-label">' + ratingLabels[i] + '</span>' +
+      '<div class="cert-score-vals"><span class="cert-pre">' + preV + '</span>' +
+      '<span class="cert-arrow ' + arrowClass + '">' + arrowText + '</span>' +
+      '<span class="cert-post">' + postV + '</span></div></div>';
+  }
+  document.getElementById("certScores").innerHTML = scoresHtml;
+
+  // Show phase 3
+  document.getElementById("phase2").classList.remove("visible");
+  document.getElementById("phase2").style.display = "none";
+  document.getElementById("phase3").classList.add("visible");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function downloadCert() {
+  var btn = document.getElementById("downloadBtn");
+  btn.textContent = "Generating...";
+  btn.disabled = true;
+
+  // Load html2canvas
+  var script = document.createElement("script");
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+  script.onload = function() {
+    html2canvas(document.getElementById("certCard"), {
+      scale: 2,
+      backgroundColor: "#FFFFFF",
+      useCORS: true
+    }).then(function(canvas) {
+      var link = document.createElement("a");
+      link.download = "Unit5_Completion_Certificate.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      btn.textContent = "Download Certificate (PNG)";
+      btn.disabled = false;
+    }).catch(function() {
+      btn.textContent = "Download failed — please screenshot instead";
+      btn.disabled = false;
+    });
+  };
+  script.onerror = function() {
+    btn.textContent = "Download unavailable — please screenshot instead";
+    btn.disabled = false;
+  };
+  document.head.appendChild(script);
+}
+
+renderQuestions();
+</script>
+<script data-goatcounter="https://professoratx.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

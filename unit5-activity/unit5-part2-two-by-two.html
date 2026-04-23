@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Part 2: The 2×2 Table — Unit 5 Activity</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Calibri, 'Trebuchet MS', sans-serif; background: #F0F3F5; color: #616467; line-height: 1.6; }
+
+.top-bar { background: #172940; color: white; display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; position: sticky; top: 0; z-index: 100; }
+.top-bar a { color: #8B9098; text-decoration: none; font-size: 13px; font-weight: 700; }
+.top-bar a:hover { color: #FFFFFF; }
+.top-bar-title { font-size: 14px; font-weight: 700; color: #FFFFFF; }
+.top-bar-progress { font-size: 12px; color: #8B9098; }
+
+.progress-dots { display: flex; justify-content: center; gap: 8px; padding: 16px 0 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #DEE2E6; }
+.dot.active { background: #2E8FAF; }
+.dot.done { background: #2D8659; }
+
+/* ========== SIDE-BY-SIDE LAYOUT ========== */
+.split-container { max-width: 1400px; margin: 0 auto; padding: 20px 16px 40px; }
+
+.orientation-bar { max-width: 1400px; margin: 0 auto; padding: 0 16px; }
+.orientation { background: #E5F3F8; color: #1A5A6E; border-radius: 10px; padding: 18px 22px; margin-bottom: 16px; font-size: 0.93rem; line-height: 1.65; }
+.orientation strong { color: #172940; }
+.orientation .step-list { margin-top: 10px; padding-left: 4px; }
+.orientation .step-item { margin-bottom: 6px; display: flex; gap: 8px; align-items: flex-start; }
+.orientation .step-num { background: #172940; color: #FFFFFF; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+.orientation .step-text { font-size: 0.88rem; }
+
+.split-layout { display: flex; gap: 20px; align-items: flex-start; }
+
+/* Tool panel — sticky */
+.tool-panel { flex: 1; min-width: 0; position: sticky; top: 56px; max-height: calc(100vh - 72px); overflow: hidden; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); background: #FFFFFF; }
+.tool-frame-header { background: #172940; color: #FFFFFF; padding: 10px 16px; font-size: 0.82rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+.tool-frame-header a { color: #8B9098; font-size: 0.75rem; text-decoration: none; }
+.tool-frame-header a:hover { color: #FFFFFF; }
+.tool-frame { width: 100%; height: calc(100vh - 112px); border: none; background: #F0F3F5; }
+
+/* Questions panel — scrolls */
+.questions-panel { flex: 1; min-width: 0; }
+
+/* Fallback: stacked on narrow screens */
+@media (max-width: 1000px) {
+  .split-layout { flex-direction: column; }
+  .tool-panel { position: relative; top: auto; max-height: none; }
+  .tool-frame { height: 650px; }
+  .questions-panel { width: 100%; }
+}
+
+/* Fallback message */
+.tool-fallback { display: none; text-align: center; padding: 40px 20px; color: #8B9098; font-size: 0.9rem; }
+.tool-fallback a { color: #2E8FAF; font-weight: 700; }
+
+/* Question cards */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+.question-section { display: none; }
+.question-section.visible { display: block; animation: fadeIn 0.4s ease; }
+
+.q-card { background: #FFFFFF; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 22px 20px; margin-bottom: 14px; border-left: 4px solid #2E8FAF; }
+.q-num { font-size: 0.75rem; color: #8B9098; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.q-stem { font-size: 0.92rem; color: #172940; font-weight: 600; margin-bottom: 12px; line-height: 1.5; }
+.q-instruction { font-size: 0.82rem; color: #2E8FAF; font-style: italic; margin-bottom: 10px; }
+
+.mc-option { display: block; width: 100%; text-align: left; font-family: Calibri, 'Trebuchet MS', sans-serif; font-size: 0.88rem; padding: 10px 12px; margin-bottom: 5px; background: #F8F9FA; border: 2px solid #DEE2E6; border-radius: 8px; cursor: pointer; color: #172940; transition: all 0.2s; line-height: 1.4; }
+.mc-option:hover:not(.answered) { border-color: #2E8FAF; background: #E5F3F8; }
+.mc-option.correct { border-color: #2D8659; background: #E1F5EE; color: #085041; cursor: default; }
+.mc-option.incorrect { border-color: #C0504D; background: #FDECEC; color: #8B2020; cursor: default; }
+.mc-option.dimmed { opacity: 0.45; cursor: default; }
+.mc-option.reveal { border-color: #2D8659; background: #E1F5EE; color: #085041; cursor: default; opacity: 1; }
+
+.q-feedback { display: none; border-radius: 8px; padding: 12px 14px; margin-top: 10px; font-size: 0.85rem; line-height: 1.55; }
+.q-feedback.show-correct { display: block; background: #E1F5EE; color: #085041; border-left: 4px solid #2D8659; }
+.q-feedback.show-incorrect { display: block; background: #FDECEC; color: #8B2020; border-left: 4px solid #C0504D; }
+
+.next-q-btn { font-family: Calibri, 'Trebuchet MS', sans-serif; font-size: 0.88rem; font-weight: 700; padding: 9px 18px; background: #2E8FAF; color: #FFFFFF; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; display: none; }
+.next-q-btn:hover { background: #247A96; }
+
+.continue-section { text-align: center; margin-top: 16px; }
+.continue-btn { font-family: Calibri, 'Trebuchet MS', sans-serif; font-size: 1.02rem; font-weight: 700; padding: 13px 32px; background: #2E8FAF; color: #FFFFFF; border: none; border-radius: 8px; cursor: pointer; }
+.continue-btn:hover { background: #247A96; }
+
+.q-header { background: #FFFFFF; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 18px 20px; margin-bottom: 14px; }
+.q-header h2 { color: #172940; font-size: 1.15rem; margin-bottom: 4px; }
+.q-header p { font-size: 0.85rem; color: #8B9098; }
+
+.footer { text-align: center; padding: 20px 16px; font-size: 12px; color: #8B9098; }
+.gate-message { text-align: center; padding: 60px 20px; }
+.gate-message h2 { margin-bottom: 12px; color: #172940; }
+.gate-message a { color: #2E8FAF; font-weight: 700; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="index.html">← Activity Hub</a>
+  <span class="top-bar-title">Part 2 of 5</span>
+  <span class="top-bar-progress">~7 min</span>
+</div>
+
+<div class="progress-dots">
+  <div class="dot done"></div>
+  <div class="dot active"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</div>
+
+<div class="split-container" id="mainContent">
+
+  <!-- ORIENTATION (full width above the split) -->
+  <div class="orientation">
+    <strong>What you're looking at:</strong> A 2×2 table (also called a contingency table) is the foundation for every epidemiological measure in this unit. It organizes data from two groups across two outcomes. RR, OR, ARR, and NNT are all calculated from the four cells of this table.
+
+    <div class="step-list">
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Start by clicking the <strong>four cards above the table</strong> (RR, ARR, NNT/NNH, OR) to read what each value means and how to interpret it.</div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Then scroll down and click the <strong>four cards below the table</strong> to see how each value is calculated — watch which cells light up for each statistic.</div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-text">When you're ready, click the <strong>"Free Play"</strong> tab at the top of the table to switch to a clean, generic table. You'll use Free Play to enter numbers from the mock article and answer the questions below.</div></div>
+    </div>
+  </div>
+
+  <!-- SIDE-BY-SIDE LAYOUT -->
+  <div class="split-layout">
+
+    <!-- LEFT: Tool iframe (sticky) -->
+    <div class="tool-panel">
+      <div class="tool-frame-header">
+        <span>How do researchers turn a 2×2 table into epidemiological values?</span>
+        <a href="../two-by-two-primer.html" target="_blank">Open in new tab ↗</a>
+      </div>
+      <iframe class="tool-frame" id="toolFrame" src="../two-by-two-primer.html" loading="lazy"></iframe>
+      <div class="tool-fallback" id="toolFallback">The tool didn't load. <a href="../two-by-two-primer.html" target="_blank">Open it directly here</a> and return to answer the questions.</div>
+    </div>
+
+    <!-- RIGHT: Questions (scrolling) -->
+    <div class="questions-panel">
+
+      <div class="q-header">
+        <h2>Questions</h2>
+        <p>Make sure you've switched to <strong>"Free Play"</strong> in the tool before answering. Questions unlock one at a time.</p>
+      </div>
+
+      <div id="questionsArea"></div>
+
+      <div class="question-section continue-section" id="continueSection">
+        <button class="continue-btn" onclick="completePart()">Continue to Part 3 →</button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">ASHS 6400: Methods of Data Analysis &bull; A.T. Still University</div>
+
+<script>
+// Gate check
+if (sessionStorage.getItem("u5_part1_done") !== "true") {
+  document.getElementById("mainContent").innerHTML = '<div class="gate-message"><h2>Complete Part 1 first</h2><p>You need to read the mock article and enter your name before starting Part 2.</p><p style="margin-top:12px;"><a href="unit5-part1-mock-article.html">Go to Part 1</a></p></div>';
+}
+
+// Iframe fallback
+var frameTimer = setTimeout(function() {
+  document.getElementById("toolFallback").style.display = "block";
+}, 8000);
+document.getElementById("toolFrame").onload = function() { clearTimeout(frameTimer); };
+
+var questions = [
+  {
+    stem: "Click each of the four statistic cards below the table (RR, ARR, NNH, OR) one at a time and watch which cells light up. The Odds Ratio highlights a different pattern than the other three. Which cells does the OR use?",
+    instruction: "Click all four cards below the table before answering.",
+    options: [
+      "The same row cells as RR — numerator and denominator from each group's row",
+      "Only the two cells in the \"Outcome Present\" column",
+      "All four cells equally, with no specific pattern",
+      "The diagonal cells: (A × D) ÷ (B × C)"
+    ],
+    correct: 3,
+    feedback: "The OR uses cross-multiplication of the diagonal cells: (A × D) ÷ (B × C). When you click OR, the highlighted cells form an X pattern. This is different from RR and ARR, which compare row proportions. This diagonal formula is why the OR can produce a different number than the RR from the same data."
+  },
+  {
+    stem: "Switch to \"Free Play\" and enter the mock article numbers: A = 55, B = 45, C = 25, D = 75. Click the RR card below the table. What value does the tool display?",
+    instruction: "Click the \"Free Play\" tab, enter the numbers, then click the RR card.",
+    options: [
+      "RR = 2.20",
+      "RR = 1.00",
+      "RR = 3.67",
+      "RR = 0.55"
+    ],
+    correct: 0,
+    feedback: "The tool displays RR = 2.20, which matches the mock article exactly. The formula is (55/100) ÷ (25/100) = 0.55 ÷ 0.25 = 2.20. Every time you see an RR in a journal article, it was calculated from a 2×2 table like this — the rate in the treatment group divided by the rate in the comparison group."
+  },
+  {
+    stem: "With the same mock article numbers (A = 55, B = 45, C = 25, D = 75), click the OR card. The tool shows OR = 3.67. Notice this is larger than the RR of 2.20. Why might the OR be larger than the RR from the same data?",
+    instruction: "Click the OR card with the article numbers entered.",
+    options: [
+      "The OR has a calculation error",
+      "The outcome is common (55% and 25%), which causes the OR and RR formulas to diverge",
+      "The OR is always exactly double the RR",
+      "The sample size is too small for the OR to be accurate"
+    ],
+    correct: 1,
+    feedback: "The OR is larger because the outcome is common — 55% and 25% are both well above 10%. When outcomes are common, the OR exaggerates the effect compared to the RR. This happens because the OR uses odds (event ÷ non-event) while the RR uses risk (event ÷ total). You'll explore this in depth in Part 4."
+  },
+  {
+    stem: "Still in Free Play, change Cell A from 55 to 35 (keep B = 45, C = 25, D = 75). Click the NNT/NNH card. What happens to the value compared to before (when A was 55)?",
+    instruction: "Make the change and click the NNT/NNH card.",
+    options: [
+      "It stays the same — only Cell A changed",
+      "It decreases — the per-person impact got stronger",
+      "It increases — the gap between groups got smaller, so more people must be treated for one to benefit",
+      "It becomes undefined"
+    ],
+    correct: 2,
+    feedback: "When A drops from 55 to 35, the Group 1 rate decreases, moving closer to the Group 2 rate. The ARR shrinks, so NNT/NNH increases — you'd need to treat more patients for one additional person to benefit. Key lesson: when the absolute gap between groups gets smaller, NNT gets larger."
+  },
+  {
+    stem: "Reset to the mock article numbers (A = 55, B = 45, C = 25, D = 75). Now imagine a study with A = 55, B = 945, C = 25, D = 975 — same number of events but much larger groups (1,000 per group instead of 100). Without entering these numbers, what would happen to the ARR?",
+    instruction: "Think about what happens to rates when group sizes change.",
+    options: [
+      "ARR would stay at 30.0% because the same number of people improved",
+      "ARR would increase because the groups are larger",
+      "ARR would decrease substantially — the rates drop to 5.5% vs. 2.5%, making the gap only about 3 percentage points",
+      "ARR cannot be calculated with groups larger than 100"
+    ],
+    correct: 2,
+    feedback: "With larger groups, 55/1000 = 5.5% and 25/1000 = 2.5%. The ARR shrinks from 30% to just 3%. The raw count of events (55 and 25) is the same, but the rates change dramatically with bigger denominators. This is why you should always look at rates, not raw counts, when interpreting epidemiological data."
+  }
+];
+
+var answered = [];
+
+function renderQuestions() {
+  var html = "";
+  for (var i = 0; i < questions.length; i++) {
+    var q = questions[i];
+    var vis = (i === 0) ? "visible" : "";
+    html += '<div class="question-section ' + vis + '" id="q' + i + '">';
+    html += '<div class="q-card">';
+    html += '<div class="q-num">Question ' + (i + 1) + ' of ' + questions.length + '</div>';
+    if (q.instruction) html += '<div class="q-instruction">' + q.instruction + '</div>';
+    html += '<div class="q-stem">' + q.stem + '</div>';
+    for (var j = 0; j < q.options.length; j++) {
+      html += '<button class="mc-option" id="q' + i + 'o' + j + '" onclick="answer(' + i + ',' + j + ')">' + String.fromCharCode(65 + j) + ') ' + q.options[j] + '</button>';
+    }
+    html += '<div class="q-feedback" id="q' + i + 'fb"></div>';
+    if (i < questions.length - 1) {
+      html += '<button class="next-q-btn" id="q' + i + 'next" onclick="showNext(' + i + ')">Next Question →</button>';
+    } else {
+      html += '<button class="next-q-btn" id="q' + i + 'next" onclick="showContinue()">Complete Part 2 ✓</button>';
+    }
+    html += '</div></div>';
+  }
+  document.getElementById("questionsArea").innerHTML = html;
+}
+
+function answer(qi, oi) {
+  if (answered.indexOf(qi) !== -1) return;
+  answered.push(qi);
+
+  var q = questions[qi];
+  var isCorrect = (oi === q.correct);
+  var fb = document.getElementById("q" + qi + "fb");
+
+  for (var j = 0; j < q.options.length; j++) {
+    var btn = document.getElementById("q" + qi + "o" + j);
+    btn.classList.add("answered");
+    if (j === oi && isCorrect) btn.classList.add("correct");
+    else if (j === oi && !isCorrect) btn.classList.add("incorrect");
+    else if (j === q.correct && !isCorrect) btn.classList.add("reveal");
+    else btn.classList.add("dimmed");
+  }
+
+  fb.className = "q-feedback " + (isCorrect ? "show-correct" : "show-incorrect");
+  fb.innerHTML = (isCorrect ? "<strong>Correct!</strong> " : "<strong>Not quite.</strong> ") + q.feedback;
+
+  document.getElementById("q" + qi + "next").style.display = "inline-block";
+
+  var ans = JSON.parse(sessionStorage.getItem("u5_answers") || "{}");
+  ans["p2q" + (qi + 1)] = { selected: oi, correct: q.correct, right: isCorrect };
+  sessionStorage.setItem("u5_answers", JSON.stringify(ans));
+
+  setTimeout(function() { fb.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 200);
+}
+
+function showNext(qi) {
+  var next = qi + 1;
+  document.getElementById("q" + next).classList.add("visible");
+  setTimeout(function() { document.getElementById("q" + next).scrollIntoView({ behavior: "smooth", block: "start" }); }, 100);
+}
+
+function showContinue() {
+  document.getElementById("continueSection").classList.add("visible");
+  setTimeout(function() { document.getElementById("continueSection").scrollIntoView({ behavior: "smooth", block: "center" }); }, 100);
+}
+
+function completePart() {
+  sessionStorage.setItem("u5_part2_done", "true");
+  window.location.href = "unit5-part3-rr-arr-nnt.html";
+}
+
+renderQuestions();
+</script>
+
+<script data-goatcounter="https://professoratx.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
