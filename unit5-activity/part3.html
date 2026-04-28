@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 5 Activity — Part 3: Absolute Risk Reduction</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Calibri, "Segoe UI", Tahoma, sans-serif;
+    background: #F0F3F5;
+    color: #172940;
+    line-height: 1.55;
+    min-height: 100vh;
+    font-size: 16.5px;
+  }
+  .header {
+    background: #172940; color: white; padding: 18px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 4px solid #2E8FAF;
+  }
+  .header-left { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .header h1 { font-size: 23px; font-weight: 700; }
+  .header .part-label {
+    font-size: 13.5px; color: #FFC857; text-transform: uppercase;
+    letter-spacing: 1.5px; font-weight: 600;
+  }
+  .progress-pill {
+    background: rgba(255,255,255,0.12); padding: 6px 14px;
+    border-radius: 20px; font-size: 13.5px; color: #F0F3F5;
+  }
+  .progress-pill strong { color: #FFC857; }
+
+  .container {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    padding: 24px 32px 60px; max-width: 1500px; margin: 0 auto;
+  }
+
+  .left-panel {
+    background: white; border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08);
+    padding: 26px 26px 22px; position: sticky; top: 24px;
+    height: fit-content; max-height: calc(100vh - 48px); overflow-y: auto;
+  }
+  .left-panel h2 { font-size: 19px; color: #172940; margin-bottom: 4px; font-weight: 700; }
+  .left-panel .subtitle { color: #616467; font-size: 14px; margin-bottom: 18px; }
+  .panel-section-label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: #2E8FAF; font-weight: 700; margin-bottom: 8px; margin-top: 18px;
+  }
+
+  .contingency {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    font-size: 14px; margin-bottom: 6px;
+  }
+  .contingency th, .contingency td {
+    padding: 11px 8px; text-align: center; border: 1px solid #d8dde2;
+  }
+  .contingency th { background: #172940; color: white; font-weight: 600; font-size: 12.5px; }
+  .contingency th:first-child { background: transparent; border: none; }
+  .contingency .row-label {
+    background: #2E8FAF; color: white; font-weight: 600;
+    text-align: left; padding: 11px 10px; font-size: 13px;
+  }
+  .contingency .group-total { background: #F0F3F5; font-weight: 700; color: #172940; }
+  .contingency .cell-loss {
+    background: #FBEAE7; font-weight: 700; font-size: 18px;
+    color: #8B2B1F; transition: background 0.3s ease;
+  }
+  .contingency .cell-no {
+    background: #E8F4EC; font-weight: 700; font-size: 18px;
+    color: #1B5E3F; transition: background 0.3s ease;
+  }
+  .table-caption {
+    text-align: center; color: #616467; font-size: 12px;
+    margin-top: 4px; font-style: italic;
+  }
+
+  .sliders {
+    background: #F8FAFB; border: 1px solid #d8dde2; border-radius: 10px;
+    padding: 14px 16px; margin-top: 14px; position: relative;
+    transition: opacity 0.3s ease;
+  }
+  .sliders.locked { opacity: 0.55; pointer-events: none; }
+  .sliders-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .sliders-header .s-title {
+    font-size: 13px; font-weight: 700; color: #172940;
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .reset-btn {
+    background: white; border: 1.5px solid #2E8FAF; color: #2E8FAF;
+    padding: 4px 10px; border-radius: 5px; font-size: 12px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: all 0.18s ease;
+  }
+  .reset-btn:hover { background: #EAF3F7; }
+  .lock-overlay {
+    position: absolute; top: 6px; right: 12px;
+    font-size: 12px; color: #8B9098; font-style: italic;
+  }
+  .sliders.locked .lock-overlay { display: block; }
+  .sliders:not(.locked) .lock-overlay { display: none; }
+
+  .slider-row {
+    display: grid; grid-template-columns: 130px 1fr 50px;
+    align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .slider-row:last-of-type { margin-bottom: 0; }
+  .slider-row .s-label { font-size: 13px; font-weight: 600; color: #172940; }
+  .slider-row .s-label.earplugs { color: #246F89; }
+  .slider-row .s-label.control { color: #8B2B1F; }
+  .slider-row input[type="range"] { width: 100%; accent-color: #2E8FAF; }
+  .slider-row .s-value {
+    text-align: right; font-size: 13.5px; font-weight: 700;
+    color: #172940; font-variant-numeric: tabular-nums;
+  }
+
+  /* Risk visual with gap band */
+  .risk-visual { margin-top: 16px; position: relative; }
+  .risk-row {
+    display: grid; grid-template-columns: 130px 1fr 60px;
+    align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .risk-row:last-child { margin-bottom: 0; }
+  .risk-label { font-size: 13px; color: #172940; font-weight: 600; }
+  .risk-bar-track {
+    height: 26px; background: #E8ECEE; border-radius: 4px; overflow: hidden;
+    position: relative;
+  }
+  .risk-bar-fill {
+    height: 100%; transition: width 0.4s ease-out; border-radius: 4px;
+  }
+  .risk-bar-fill.earplugs { background: #2E8FAF; }
+  .risk-bar-fill.control { background: #C0504D; }
+  .risk-percent {
+    font-size: 13.5px; font-weight: 700; color: #172940;
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .gap-band {
+    margin-top: 6px;
+    display: grid; grid-template-columns: 130px 1fr 60px;
+    align-items: center; gap: 10px;
+  }
+  .gap-band-label { font-size: 12px; color: #FFC857; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .gap-band-bar {
+    height: 16px; background: repeating-linear-gradient(
+      45deg, #FFC857, #FFC857 4px, #FFD980 4px, #FFD980 8px
+    );
+    border-radius: 3px;
+    transition: width 0.4s ease-out, margin-left 0.4s ease-out;
+    border: 1px solid #E5B143;
+  }
+  .gap-band-track {
+    background: transparent;
+    height: 16px;
+    position: relative;
+  }
+  .gap-band-pct {
+    font-size: 13.5px; font-weight: 700; color: #8B6914;
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+
+  .stat-card {
+    border: 2px solid #2E8FAF; border-radius: 10px; padding: 18px 20px;
+    text-align: center; cursor: pointer; transition: all 0.25s ease;
+    background: white; user-select: none; margin-top: 16px;
+  }
+  .stat-card.locked {
+    background: #F0F3F5; border-style: dashed; border-color: #b8c2c8;
+  }
+  .stat-card.locked:hover {
+    background: #E8EDF0; border-color: #2E8FAF; transform: translateY(-1px);
+  }
+  .stat-card.revealed {
+    background: linear-gradient(135deg, #2E8FAF 0%, #246F89 100%);
+    color: white; border-color: #246F89; cursor: default;
+  }
+  .stat-card .label {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
+    color: #616467; margin-bottom: 6px; font-weight: 600;
+  }
+  .stat-card.revealed .label { color: #FFC857; }
+  .stat-card .value {
+    font-size: 42px; font-weight: 700; line-height: 1;
+    margin-bottom: 6px; color: #172940; font-variant-numeric: tabular-nums;
+  }
+  .stat-card.revealed .value { color: white; }
+  .stat-card .ci { font-size: 13px; color: #616467; }
+  .stat-card.revealed .ci { color: #F0F3F5; }
+  .stat-card .hint {
+    font-size: 13px; color: #2E8FAF; font-weight: 600; margin-top: 6px;
+  }
+  .stat-card.revealed .hint { display: none; }
+  .stat-card .formula {
+    font-size: 13.5px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.25);
+    font-family: "Cambria Math", Cambria, serif;
+    color: #F0F3F5; display: none; font-variant-numeric: tabular-nums;
+  }
+  .stat-card.revealed .formula { display: block; }
+
+  /* ARR scale (number line) */
+  .arr-scale-wrap {
+    margin-top: 16px; background: white;
+    border: 1px solid #d8dde2; border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .arr-scale-title {
+    font-size: 13px; font-weight: 700; color: #172940;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 22px; text-align: center;
+  }
+  .arr-scale-outer {
+    position: relative; padding-top: 38px;
+  }
+  .arr-scale {
+    position: relative; height: 30px;
+    background: linear-gradient(90deg, #C0504D 0%, #D89A92 30%, #B8C5CC 50%, #4A9BB7 70%, #2E8FAF 100%);
+    border-radius: 15px;
+  }
+  .arr-tick-0 {
+    position: absolute; top: -6px; bottom: -6px; left: 50%;
+    width: 2px; background: #172940; z-index: 2;
+  }
+  .arr-tick-0-pill {
+    position: absolute; top: -34px; left: 50%; transform: translateX(-50%);
+    background: #FFC857; color: #172940;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 700;
+    white-space: nowrap; z-index: 4;
+  }
+  .arr-marker-group {
+    position: absolute; top: -34px;
+    transform: translateX(-50%);
+    transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 5;
+  }
+  .arr-marker-pill {
+    background: #172940; color: white;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+    text-align: center; white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    font-variant-numeric: tabular-nums;
+  }
+  .arr-marker-dot {
+    width: 22px; height: 22px;
+    background: white;
+    border: 3px solid #172940;
+    border-radius: 50%;
+    margin: 4px auto 0;
+    position: relative; top: 24px;
+  }
+  .arr-axis-labels {
+    display: flex; justify-content: space-between;
+    margin-top: 12px; font-size: 12px; color: #172940; font-weight: 600;
+    padding: 0 2px;
+  }
+  .arr-readout-bar {
+    margin-top: 14px; padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 14px; font-weight: 700;
+    text-align: center;
+    line-height: 1.4;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+  .arr-readout-bar.protective {
+    background: #E8F4EC; color: #1B5E3F;
+    border-left: 3px solid #2D8B5A;
+  }
+  .arr-readout-bar.neutral {
+    background: #FFF8E1; color: #8B6914;
+    border-left: 3px solid #FFC857;
+  }
+  .arr-readout-bar.harmful {
+    background: #FBEAE7; color: #8B2B1F;
+    border-left: 3px solid #C0504D;
+  }
+
+  /* Step 2 — stacked bars with gap visual */
+  .step-stacked {
+    background: #F8FAFB;
+    border: 1px solid #d8dde2;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 14px 0;
+  }
+  .stacked-instruct {
+    font-size: 13.5px;
+    color: #616467;
+    text-align: center;
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+  .stacked-bars {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .stacked-row {
+    display: grid; grid-template-columns: 140px 1fr 70px;
+    align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .stacked-row .s-label {
+    font-size: 13.5px; color: #172940; font-weight: 600;
+  }
+  .stacked-row .s-label.control { color: #8B2B1F; }
+  .stacked-row .s-label.earplugs { color: #246F89; }
+  .stacked-track {
+    height: 26px; background: #E8ECEE; border-radius: 4px;
+    overflow: hidden; position: relative;
+  }
+  .stacked-fill {
+    height: 100%;
+    transition: width 0.4s ease-out;
+    border-radius: 4px;
+  }
+  .stacked-fill.control { background: #C0504D; }
+  .stacked-fill.earplugs { background: #2E8FAF; }
+  .stacked-pct {
+    font-size: 13.5px; font-weight: 700; color: #172940;
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .gap-row {
+    display: grid; grid-template-columns: 140px 1fr 70px;
+    align-items: center; gap: 10px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #d8dde2;
+  }
+  .gap-label {
+    font-size: 12.5px; font-weight: 700; color: #8B6914;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .gap-bar-container {
+    position: relative; height: 18px;
+  }
+  .gap-bar {
+    height: 100%;
+    background: repeating-linear-gradient(
+      45deg, #FFC857, #FFC857 5px, #FFD980 5px, #FFD980 10px
+    );
+    border: 1px solid #E5B143;
+    border-radius: 3px;
+    transition: width 0.4s ease-out, margin-left 0.4s ease-out;
+  }
+  .gap-pct {
+    font-size: 14px; font-weight: 700; color: #8B6914;
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .stacked-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .stacked-control-row .sc-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #172940;
+    margin-bottom: 4px;
+    display: block;
+  }
+  .stacked-control-row .sc-label.control { color: #8B2B1F; }
+  .stacked-control-row .sc-label.earplugs { color: #246F89; }
+  .stacked-control-row input[type="range"] {
+    width: 100%;
+    accent-color: #2E8FAF;
+  }
+  .stacked-prompt-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .stacked-prompt-btn {
+    background: white;
+    border: 2px solid #d8dde2;
+    color: #172940;
+    padding: 10px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.18s ease;
+    line-height: 1.3;
+  }
+  .stacked-prompt-btn:hover { border-color: #2E8FAF; background: #EAF3F7; }
+  .stacked-prompt-btn.visited {
+    background: #E8F4EC;
+    border-color: #2D8B5A;
+    color: #1B5E3F;
+  }
+  .stacked-prompt-btn.visited::before {
+    content: "✓ ";
+    color: #2D8B5A;
+  }
+
+  .right-panel { display: flex; flex-direction: column; gap: 18px; }
+
+  .step {
+    background: white; border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08);
+    padding: 24px 26px; border-left: 5px solid #2E8FAF;
+  }
+  .step-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  }
+  .step-number {
+    background: #2E8FAF; color: white; width: 34px; height: 34px;
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;
+  }
+  .step-title { font-size: 18.5px; font-weight: 700; color: #172940; }
+  .step-body { color: #2c3e50; font-size: 16px; line-height: 1.7; }
+  .step-body p { margin-bottom: 12px; }
+  .step-body p:last-child { margin-bottom: 0; }
+  .step-body strong { color: #172940; }
+
+  .article-excerpt {
+    background: #F8FAFB; border: 1px solid #d8dde2;
+    border-left: 4px solid #172940; border-radius: 6px;
+    padding: 18px 22px; margin: 14px 0;
+    font-family: Georgia, "Times New Roman", serif;
+    color: #2c3e50; font-size: 15.5px; line-height: 1.75;
+  }
+  .article-excerpt .article-meta {
+    font-size: 12.5px; font-family: Calibri, sans-serif;
+    color: #616467; margin-bottom: 8px; text-transform: uppercase;
+    letter-spacing: 1px; font-weight: 600;
+  }
+  .hi-target {
+    background: transparent; transition: background 0.5s ease;
+    padding: 1px 3px; border-radius: 2px;
+  }
+  .hi-target.on { background: #FFE9A6; }
+  .hi-target.on-2 { background: #C9E4D5; }
+  .hi-target.on-3 { background: #F4C7C2; }
+
+  .reveal-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .reveal-btn {
+    background: white; color: #2E8FAF; border: 2px solid #2E8FAF;
+    padding: 9px 16px; border-radius: 7px; font-size: 13.5px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: all 0.18s ease;
+  }
+  .reveal-btn:hover { background: #EAF3F7; transform: translateY(-1px); }
+  .reveal-btn.done {
+    background: #246F89; color: white; border-color: #246F89; cursor: default;
+  }
+  .reveal-btn.done:hover { transform: none; }
+
+  .annot-line {
+    margin-top: 10px; padding: 11px 16px; background: #fff;
+    border-radius: 6px; border-left: 3px solid #FFC857;
+    font-family: Calibri, sans-serif; font-size: 14.5px;
+    color: #172940; display: none; animation: fadeIn 0.4s ease-out;
+    line-height: 1.55;
+  }
+  .annot-line.show { display: block; }
+  .annot-line .a-tag {
+    display: inline-block; font-weight: 700; color: #2E8FAF;
+    margin-right: 6px; text-transform: uppercase;
+    font-size: 11.5px; letter-spacing: 1px;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Dot grids — Step 3 of Part 3 (counting subtraction visual) */
+  .dotgrids {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin: 14px 0 10px;
+  }
+  .dotgrid-card {
+    background: #F8FAFB; border-radius: 10px; padding: 14px 14px;
+    border: 1px solid #d8dde2; text-align: center;
+  }
+  .dotgrid-card.earplugs { border-top: 3px solid #2E8FAF; }
+  .dotgrid-card.control { border-top: 3px solid #C0504D; }
+  .dotgrid-title { font-size: 13.5px; font-weight: 700; color: #172940; margin-bottom: 4px; }
+  .dotgrid-sub { font-size: 12.5px; color: #616467; margin-bottom: 10px; }
+  .dotgrid {
+    display: grid; grid-template-columns: repeat(10, 1fr);
+    gap: 3px; max-width: 180px; margin: 0 auto 10px;
+  }
+  .dot {
+    aspect-ratio: 1 / 1; border-radius: 50%;
+    background: #D8DEE2; transition: background 0.2s ease, transform 0.2s ease;
+  }
+  .dot.earplugs-loss { background: #2E8FAF; }
+  .dot.control-loss { background: #C0504D; }
+  .dot.spared {
+    background: #FFC857;
+    transform: scale(1.18);
+    box-shadow: 0 0 0 1.5px #8B6914;
+  }
+  .dotgrid-count { font-size: 14px; color: #172940; font-weight: 600; }
+  .dotgrid-count strong { font-size: 16px; color: #172940; }
+  .dotgrid-action { text-align: center; margin-bottom: 6px; }
+
+  .spared-callout {
+    background: #FFF8E1; border: 1px solid #F4D77A;
+    border-radius: 8px; padding: 14px 18px;
+    margin-top: 12px; text-align: center;
+    font-size: 15px; color: #5a4a10; line-height: 1.55;
+  }
+  .spared-callout strong { color: #172940; font-size: 17px; }
+  .spared-callout .big-num {
+    font-size: 32px; font-weight: 700; color: #8B6914;
+    display: block; margin: 6px 0;
+  }
+
+  .calc-box {
+    background: #F8FAFB; border-radius: 10px;
+    border: 1px solid #d8dde2; padding: 20px 22px; margin: 14px 0;
+    text-align: center; font-family: "Cambria Math", Cambria, serif;
+    font-size: 20px; color: #172940;
+  }
+  .calc-box .calc-step { margin: 6px 0; transition: opacity 0.4s ease; }
+  .calc-box .calc-result {
+    color: #2E8FAF; font-weight: 700; font-size: 24px;
+    opacity: 0; transition: opacity 0.6s ease; display: inline-block;
+  }
+  .calc-box .calc-result.show { opacity: 1; }
+  .calc-box .calc-action { margin-top: 12px; }
+  .calc-cursor {
+    display: inline-block; width: 10px; color: #2E8FAF;
+    animation: blink 1s infinite;
+  }
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  .so-what {
+    background: #FFF8E1; border: 1px solid #F4D77A; border-radius: 8px;
+    padding: 15px 19px; margin-top: 12px;
+  }
+  .so-what .sw-label {
+    color: #8B6914; font-weight: 700; font-size: 12.5px;
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+  }
+  .so-what p { color: #5a4a10; font-size: 15.5px; line-height: 1.6; margin: 0; }
+
+  .mc-block {
+    background: white; border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08);
+    padding: 24px 26px; border-top: 5px solid #FFC857;
+    opacity: 0.45; pointer-events: none; transition: opacity 0.4s ease;
+  }
+  .mc-block.unlocked { opacity: 1; pointer-events: auto; }
+  .mc-question {
+    font-size: 17px; font-weight: 700; color: #172940; margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .mc-question .q-num { color: #2E8FAF; margin-right: 6px; }
+  .mc-options { display: flex; flex-direction: column; gap: 10px; }
+  .mc-option {
+    background: #F8FAFB; border: 2px solid #d8dde2; border-radius: 8px;
+    padding: 13px 17px; cursor: pointer; font-size: 15.5px;
+    color: #2c3e50; text-align: left; transition: all 0.18s ease;
+    font-family: inherit; width: 100%; line-height: 1.55;
+  }
+  .mc-option:hover:not(:disabled) { border-color: #2E8FAF; background: #EAF3F7; }
+  .mc-option:disabled { cursor: default; }
+  .mc-option.selected-correct {
+    background: #E8F4EC; border-color: #2D8B5A; color: #1B5E3F; font-weight: 600;
+  }
+  .mc-option.selected-wrong {
+    background: #FBEAE7; border-color: #C0504D; color: #8B2B1F;
+  }
+  .mc-option.show-correct {
+    background: #E8F4EC; border-color: #2D8B5A; color: #1B5E3F; font-weight: 600;
+  }
+  .mc-option .marker {
+    display: inline-block; font-weight: 700; margin-right: 8px; color: #2E8FAF;
+  }
+  .mc-feedback {
+    margin-top: 14px; padding: 15px 17px; border-radius: 8px;
+    font-size: 15px; line-height: 1.6; display: none;
+  }
+  .mc-feedback.correct {
+    background: #E8F4EC; border-left: 4px solid #2D8B5A; color: #1B5E3F; display: block;
+  }
+  .mc-feedback.incorrect {
+    background: #FBEAE7; border-left: 4px solid #C0504D; color: #8B2B1F; display: block;
+  }
+  .mc-feedback strong {
+    display: block; margin-bottom: 4px; font-size: 13.5px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  .explore-prompt {
+    background: #FFF8E1; border: 1px solid #F4D77A; border-radius: 8px;
+    padding: 13px 17px; margin-bottom: 14px;
+    font-size: 15px; color: #5a4a10; line-height: 1.55;
+  }
+  .explore-prompt strong { color: #172940; }
+  .explore-prompt .e-label {
+    color: #8B6914; font-weight: 700; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 4px; display: block;
+  }
+
+  .takeaways {
+    background: #172940; color: white; border-radius: 12px;
+    padding: 28px 30px; border-left: 5px solid #FFC857;
+  }
+  .takeaways h3 {
+    color: #FFC857; font-size: 13.5px; text-transform: uppercase;
+    letter-spacing: 1.5px; margin-bottom: 6px; font-weight: 700;
+  }
+  .takeaways h2 {
+    font-size: 23px; color: white; margin-bottom: 18px; font-weight: 700;
+  }
+  .takeaways ul { list-style: none; padding: 0; margin: 0; }
+  .takeaways li {
+    padding: 13px 0 13px 38px; border-bottom: 1px solid rgba(255,255,255,0.12);
+    position: relative; font-size: 15.5px; line-height: 1.65; color: #F0F3F5;
+  }
+  .takeaways li:last-child { border-bottom: none; }
+  .takeaways li::before {
+    content: "✓"; position: absolute; left: 0; top: 13px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #FFC857; color: #172940; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 13.5px;
+  }
+  .takeaways li strong { color: white; }
+
+  .nav-bar {
+    grid-column: 1 / -1; display: flex; justify-content: space-between;
+    align-items: center; padding: 18px 0 0; margin-top: 8px;
+  }
+  .nav-btn {
+    background: #2E8FAF; color: white; border: none;
+    padding: 14px 30px; border-radius: 8px; font-size: 15.5px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: all 0.2s ease; text-decoration: none; display: inline-block;
+  }
+  .nav-btn:hover { background: #246F89; transform: translateY(-1px); }
+  .nav-btn.secondary {
+    background: white; color: #2E8FAF; border: 2px solid #2E8FAF;
+  }
+  .nav-btn.secondary:hover { background: #EAF3F7; }
+  .completion-msg {
+    color: #2D8B5A; font-size: 14.5px; font-weight: 600;
+    text-align: center; flex-grow: 1; margin: 0 20px;
+  }
+
+  @media (max-width: 1100px) {
+    .container { grid-template-columns: 1fr; }
+    .left-panel { position: relative; top: auto; max-height: none; }
+  }
+  @media (max-width: 600px) {
+    .header { padding: 14px 18px; flex-direction: column; gap: 8px; align-items: flex-start; }
+    .container { padding: 16px; }
+    .dotgrids { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <h1>Unit 5: Epidemiology Activity</h1>
+    <span class="part-label">Part 3 of 7 · Absolute Risk Reduction</span>
+  </div>
+  <div class="progress-pill">Step <strong id="step-counter">1</strong> of 6</div>
+</header>
+
+<main class="container">
+
+  <aside class="left-panel">
+    <h2>The article's data</h2>
+    <p class="subtitle">Custom musician earplugs vs. no protection · n = 200</p>
+
+    <table class="contingency">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Developed hearing loss</th>
+          <th>No hearing loss</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">Custom earplugs</td>
+          <td class="cell-loss" id="cell-ep-loss">25</td>
+          <td class="cell-no" id="cell-ep-no">75</td>
+          <td class="group-total">100</td>
+        </tr>
+        <tr>
+          <td class="row-label">No protection</td>
+          <td class="cell-loss" id="cell-ctrl-loss">55</td>
+          <td class="cell-no" id="cell-ctrl-no">45</td>
+          <td class="group-total">100</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="table-caption">Outcome at 24 months · Patients with measurable ≥15 dB threshold shift</p>
+
+    <div class="sliders locked" id="sliders-box">
+      <div class="lock-overlay">🔒 Unlocks at Step 6</div>
+      <div class="sliders-header">
+        <span class="s-title">Live exploration</span>
+        <button class="reset-btn" onclick="resetSliders()">Reset</button>
+      </div>
+      <div class="slider-row">
+        <span class="s-label earplugs">Earplugs % w/ loss</span>
+        <input type="range" id="slider-earplugs" min="0" max="100" value="25" step="1" oninput="onSliderChange()">
+        <span class="s-value" id="slider-earplugs-val">25%</span>
+      </div>
+      <div class="slider-row">
+        <span class="s-label control">No protection % w/ loss</span>
+        <input type="range" id="slider-control" min="0" max="100" value="55" step="1" oninput="onSliderChange()">
+        <span class="s-value" id="slider-control-val">55%</span>
+      </div>
+    </div>
+
+    <div class="panel-section-label">Risk in each group</div>
+    <div class="risk-visual">
+      <div class="risk-row">
+        <span class="risk-label">No protection</span>
+        <div class="risk-bar-track"><div class="risk-bar-fill control" id="bar-control" style="width: 55%;"></div></div>
+        <span class="risk-percent" id="bar-control-pct">55%</span>
+      </div>
+      <div class="risk-row">
+        <span class="risk-label">Custom earplugs</span>
+        <div class="risk-bar-track"><div class="risk-bar-fill earplugs" id="bar-earplugs" style="width: 25%;"></div></div>
+        <span class="risk-percent" id="bar-earplugs-pct">25%</span>
+      </div>
+      <div class="gap-band">
+        <span class="gap-band-label">★ The gap</span>
+        <div class="gap-band-track">
+          <div class="gap-band-bar" id="gap-bar" style="width: 30%; margin-left: 25%;"></div>
+        </div>
+        <span class="gap-band-pct" id="gap-pct">30 pp</span>
+      </div>
+    </div>
+
+    <div class="panel-section-label">Calculated statistic</div>
+    <div id="arr-card" class="stat-card locked" onclick="revealARR()">
+      <div class="label">Absolute Risk Reduction</div>
+      <div class="value" id="arr-value">? ? %</div>
+      <div class="ci" id="arr-ci">95% CI not yet revealed</div>
+      <div class="hint">▸ Click to reveal the value</div>
+      <div class="formula" id="arr-formula">ARR = 55% − 25% = 30 percentage points</div>
+    </div>
+
+    <div class="arr-scale-wrap" id="arr-scale-wrap" style="display:none;">
+      <div class="arr-scale-title">Where this ARR sits on the scale</div>
+      <div class="arr-scale-outer">
+        <div class="arr-scale">
+          <div class="arr-tick-0"></div>
+          <div class="arr-tick-0-pill">ARR = 0</div>
+          <div class="arr-marker-group" id="arr-marker-panel" style="left: 80%;">
+            <div class="arr-marker-pill" id="arr-marker-pill-panel">+30 pp</div>
+            <div class="arr-marker-dot"></div>
+          </div>
+        </div>
+        <div class="arr-axis-labels">
+          <span>−50</span><span>−25</span><span>0</span><span>+25</span><span>+50</span>
+        </div>
+      </div>
+      <div class="arr-readout-bar protective" id="arr-readout-bar-panel">
+        Earplugs reduce risk by 30 percentage points (protective effect)
+      </div>
+    </div>
+
+  </aside>
+
+  <section class="right-panel">
+
+    <div class="step" style="border-left-color:#FFC857; background: #172940;">
+      <div class="step-header">
+        <div class="step-number" style="background:#FFC857; color:#172940;">★</div>
+        <div class="step-title" style="color: white;">Orientation</div>
+      </div>
+      <div class="step-body" style="color: #F0F3F5;">
+        <p>In Part 2 you saw that RR doesn't tell you how many patients are actually spared. <strong style="color:#FFC857;">Absolute Risk Reduction (ARR)</strong> answers that question. It's a subtraction, not a ratio — and it's often what matters most for clinical decisions. Let's walk through it.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Find the key pieces in the article</div>
+      </div>
+      <div class="step-body">
+        <p>Here's the next sentence from the same study. Click each button to spotlight a piece.</p>
+        <div class="article-excerpt">
+          <div class="article-meta">From the Results section</div>
+          The use of custom earplugs <span class="hi-target" id="hi-1">reduced the absolute risk of measurable hearing loss by 30 percentage points</span> (<span class="hi-target" id="hi-2">ARR = 30%</span>, <span class="hi-target" id="hi-3">95% CI [18%, 42%]</span>) over the 24-month observation period.
+        </div>
+        <div class="reveal-row">
+          <button class="reveal-btn" id="hi-btn-1" onclick="highlight(1)">① Spotlight the claim</button>
+          <button class="reveal-btn" id="hi-btn-2" onclick="highlight(2)">② Spotlight the ARR value</button>
+          <button class="reveal-btn" id="hi-btn-3" onclick="highlight(3)">③ Spotlight the CI</button>
+        </div>
+        <div class="annot-line" id="annot-1"><span class="a-tag">The claim</span>"Reduced absolute risk by 30 percentage points" — this is a direct, plain-language statement of the difference between the two groups.</div>
+        <div class="annot-line" id="annot-2"><span class="a-tag">ARR = 30%</span>This is the difference between the two risks: 55% − 25% = 30 percentage points. Note: the unit is <em>percentage points</em>, not "30%" of something.</div>
+        <div class="annot-line" id="annot-3"><span class="a-tag">CI [18%, 42%]</span>The interval excludes 0, so the reduction is statistically significant. (For ARR, the null value is 0, not 1.)</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">ARR is the gap between two risks</div>
+      </div>
+      <div class="step-body">
+        <p>While RR is a <em>ratio</em> of two risks, ARR is the <em>difference</em>. It tells you, in plain percentage points, how much smaller the treatment group's risk is.</p>
+
+        <div class="step-stacked">
+          <div class="stacked-instruct">Drag the controls to change each group's risk — watch the gap update</div>
+
+          <div class="stacked-bars">
+            <div class="stacked-row">
+              <span class="s-label control">No protection</span>
+              <div class="stacked-track"><div class="stacked-fill control" id="step2-bar-control" style="width: 55%;"></div></div>
+              <span class="stacked-pct" id="step2-pct-control">55%</span>
+            </div>
+            <div class="stacked-row">
+              <span class="s-label earplugs">Custom earplugs</span>
+              <div class="stacked-track"><div class="stacked-fill earplugs" id="step2-bar-earplugs" style="width: 25%;"></div></div>
+              <span class="stacked-pct" id="step2-pct-earplugs">25%</span>
+            </div>
+            <div class="gap-row">
+              <span class="gap-label">★ The gap (ARR)</span>
+              <div class="gap-bar-container">
+                <div class="gap-bar" id="step2-gap-bar" style="width: 30%; margin-left: 25%;"></div>
+              </div>
+              <span class="gap-pct" id="step2-gap-pct">30 pp</span>
+            </div>
+          </div>
+
+          <div class="stacked-controls">
+            <div class="stacked-control-row">
+              <span class="sc-label control">No protection % w/ loss</span>
+              <input type="range" id="step2-slider-control" min="0" max="100" value="55" step="1" oninput="updateStep2()">
+            </div>
+            <div class="stacked-control-row">
+              <span class="sc-label earplugs">Earplugs % w/ loss</span>
+              <input type="range" id="step2-slider-earplugs" min="0" max="100" value="25" step="1" oninput="updateStep2()">
+            </div>
+          </div>
+
+          <div class="stacked-prompt-buttons">
+            <button class="stacked-prompt-btn" id="prompt-btn-big" onclick="step2Prompt('big')">Big gap<br>(70% vs. 10%)</button>
+            <button class="stacked-prompt-btn" id="prompt-btn-zero" onclick="step2Prompt('zero')">No gap<br>(40% vs. 40%)</button>
+            <button class="stacked-prompt-btn" id="prompt-btn-flip" onclick="step2Prompt('flip')">Negative gap<br>(20% vs. 60%)</button>
+          </div>
+        </div>
+
+        <p>Three meaningful zones for ARR. <strong>Positive ARR</strong> (gap pointing toward less risk in the treatment group) means the treatment is protective. <strong>ARR = 0</strong> means both groups have the same risk — the treatment makes no difference. <strong>Negative ARR</strong> means the treatment group fared <em>worse</em> than the comparison — the treatment was harmful.</p>
+        <p>Notice that ARR is in <strong>percentage points</strong>. A reduction from 55% to 25% is a 30 <em>percentage point</em> drop, not a 30% drop in relative terms. This distinction trips up readers and even authors.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Count the patients who were actually spared</div>
+      </div>
+      <div class="step-body">
+        <p>Same dot grids as before, but this time look at the <em>difference</em> between them. Click the button to highlight the patients who would have developed hearing loss without earplugs — but didn't, because they had them.</p>
+
+        <div class="dotgrids">
+          <div class="dotgrid-card earplugs">
+            <div class="dotgrid-title">Custom earplugs</div>
+            <div class="dotgrid-sub">100 young adults</div>
+            <div class="dotgrid" id="grid-earplugs"></div>
+            <div class="dotgrid-count"><strong id="grid-earplugs-count">25</strong> / 100 developed hearing loss</div>
+          </div>
+          <div class="dotgrid-card control">
+            <div class="dotgrid-title">No protection</div>
+            <div class="dotgrid-sub">100 young adults</div>
+            <div class="dotgrid" id="grid-control"></div>
+            <div class="dotgrid-count"><strong id="grid-control-count">55</strong> / 100 developed hearing loss</div>
+          </div>
+        </div>
+
+        <div class="dotgrid-action">
+          <button class="reveal-btn" id="grid-btn" onclick="highlightSpared()">▸ Highlight the patients spared by earplugs</button>
+        </div>
+
+        <div class="spared-callout" id="spared-callout" style="display:none;">
+          <strong>Out of every 100 young adults given earplugs:</strong>
+          <span class="big-num">30 were spared</span>
+          from developing measurable hearing loss compared with no protection. That's 55 minus 25.
+        </div>
+
+        <p>Those gold dots are the absolute count behind the ARR. <strong>Same number of patients (200), same study, same outcomes — but ARR tells a different story than RR did.</strong> RR said earplugs cut risk to less than half. ARR says the cut amounts to 30 fewer affected patients per 100 treated.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Compute the difference, then click the card</div>
+      </div>
+      <div class="step-body">
+        <p>You have both risks. This time, just subtract.</p>
+
+        <div class="calc-box">
+          <div class="calc-step">
+            ARR = Risk<sub>control</sub> − Risk<sub>treatment</sub>
+          </div>
+          <div class="calc-step" style="margin-top:10px;">
+            ARR = 55% − 25% = <span class="calc-result" id="calc-result">30 percentage points</span><span class="calc-cursor" id="calc-cursor">|</span>
+          </div>
+          <div class="calc-action">
+            <button class="reveal-btn" id="calc-btn" onclick="showCalcResult()">▸ Show me the answer</button>
+          </div>
+        </div>
+
+        <p>Now <strong>click the dashed ARR card on the left side</strong> to confirm the value and see the 95% CI. <strong>This also unlocks the two sliders below the card</strong>, which you'll use in the exploration questions later.</p>
+
+        <div class="so-what">
+          <div class="sw-label">★ So what does ARR = 30 pp mean?</div>
+          <p>For every 100 young adults fitted with custom earplugs, <strong>about 30 fewer will develop measurable hearing loss</strong> compared with 100 going unprotected. That's a number patients can hold onto: 30 fewer per 100. ARR is what makes RR <em>concrete</em>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <div class="step-title">Four rules to remember when reading any ARR</div>
+      </div>
+      <div class="step-body">
+        <p>ARR shows up in clinical literature constantly — sometimes labeled "absolute risk difference" or "risk difference." These four rules carry through:</p>
+        <p style="padding-left: 14px;">
+          • <strong>ARR = 0</strong> → no difference between the groups; the null value for ARR<br>
+          • <strong>ARR &gt; 0</strong> → treatment group has lower risk (protective)<br>
+          • <strong>ARR &lt; 0</strong> → treatment group has higher risk (harmful)<br>
+          • <strong>CI excluding 0</strong> → the difference is statistically significant
+        </p>
+        <p>Notice the null value for ARR is <strong>0</strong> — different from RR's null of 1. Why? Because ARR is a <em>difference</em>: when groups are identical, the difference is zero. When you read CIs for ARR, check whether they cross 0 (not 1).</p>
+        <p>Also: ARR is reported in <strong>percentage points</strong>, not percent. A 30 percentage-point reduction from 55% is much bigger than a "30% reduction" sounds at first. The mock article's CI [18%, 42%] is in percentage points too.</p>
+      </div>
+    </div>
+
+    <div class="step" id="step-6">
+      <div class="step-header">
+        <div class="step-number">6</div>
+        <div class="step-title">Now explore — change the data and watch the ARR shift</div>
+      </div>
+      <div class="step-body">
+        <p>Because you clicked the ARR card in Step 4, <strong>the two sliders on the left panel are now unlocked</strong>. As you drag them, the 2×2 table, the bars, the gap visualization, and the ARR card will all recalculate live. The scale below the card shows where the new value lands relative to the null (0 pp).</p>
+        <p>Use the sliders to answer Q4–Q6 below. There's a <strong>Reset</strong> button on the slider panel to return to the article's original values.</p>
+      </div>
+    </div>
+
+    <div id="mc1-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q1.</span> A patient asks what ARR = 30 percentage points means for them. Which response is the most accurate and clear?</div>
+      <div class="mc-options" id="mc1-options">
+        <button class="mc-option" onclick="answerMC(1, 'a', true)"><span class="marker">A.</span> "Out of every 100 young adults like you, about 30 fewer will develop measurable hearing loss with earplugs than without."</button>
+        <button class="mc-option" onclick="answerMC(1, 'b', false)"><span class="marker">B.</span> "Earplugs lower your risk by 30% compared to not wearing them."</button>
+        <button class="mc-option" onclick="answerMC(1, 'c', false)"><span class="marker">C.</span> "Earplugs cure 30% of hearing loss cases."</button>
+        <button class="mc-option" onclick="answerMC(1, 'd', false)"><span class="marker">D.</span> "Earplugs reduce hearing loss to 30% of what it was."</button>
+      </div>
+      <div class="mc-feedback" id="mc1-feedback"></div>
+    </div>
+
+    <div id="mc2-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q2.</span> The article reports the 95% CI for ARR as [18%, 42%]. What can you conclude?</div>
+      <div class="mc-options" id="mc2-options">
+        <button class="mc-option" onclick="answerMC(2, 'a', false)"><span class="marker">A.</span> The result is not statistically significant because the CI includes 30%.</button>
+        <button class="mc-option" onclick="answerMC(2, 'b', true)"><span class="marker">B.</span> The interval excludes 0, so the reduction is statistically significant; the true ARR is plausibly somewhere between 18 and 42 percentage points.</button>
+        <button class="mc-option" onclick="answerMC(2, 'c', false)"><span class="marker">C.</span> The interval excludes 1, so the reduction is statistically significant.</button>
+        <button class="mc-option" onclick="answerMC(2, 'd', false)"><span class="marker">D.</span> 95% of patients had ARR values between 18% and 42%.</button>
+      </div>
+      <div class="mc-feedback" id="mc2-feedback"></div>
+    </div>
+
+    <div id="mc3-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q3.</span> A colleague says, "ARR and RR tell you the same thing — they just use different math." How should you respond?</div>
+      <div class="mc-options" id="mc3-options">
+        <button class="mc-option" onclick="answerMC(3, 'a', false)"><span class="marker">A.</span> They're right — ARR and RR are interchangeable.</button>
+        <button class="mc-option" onclick="answerMC(3, 'b', false)"><span class="marker">B.</span> They're right because both can be calculated from a 2×2 table.</button>
+        <button class="mc-option" onclick="answerMC(3, 'c', false)"><span class="marker">C.</span> They're right because both have the same null value of 1.</button>
+        <button class="mc-option" onclick="answerMC(3, 'd', true)"><span class="marker">D.</span> They're not the same. RR is a ratio that tells you the relative magnitude of the effect. ARR is the absolute difference in percentage points. Two studies can have identical RR values but very different ARRs depending on baseline risk.</button>
+      </div>
+      <div class="mc-feedback" id="mc3-feedback"></div>
+    </div>
+
+    <div id="mc4-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q4.</span> Use the sliders on the left to test what happens when both groups are equal.</div>
+      <div class="explore-prompt">
+        <span class="e-label">▸ Try this on the left panel</span>
+        Set <strong>Earplugs % w/ loss = 40%</strong> and <strong>No protection % w/ loss = 40%</strong>. <strong>What is the new ARR, and what does it mean?</strong>
+      </div>
+      <div class="mc-options" id="mc4-options">
+        <button class="mc-option" onclick="answerMC(4, 'a', false)"><span class="marker">A.</span> ARR = 40 pp — both groups had 40% with hearing loss.</button>
+        <button class="mc-option" onclick="answerMC(4, 'b', false)"><span class="marker">B.</span> ARR = 1 pp — when groups match, ARR collapses to 1.</button>
+        <button class="mc-option" onclick="answerMC(4, 'c', true)"><span class="marker">C.</span> ARR = 0 pp — when the groups have the same risk, there is no difference between them. This is the null value for ARR (equivalent to RR = 1).</button>
+        <button class="mc-option" onclick="answerMC(4, 'd', false)"><span class="marker">D.</span> ARR = 80 pp — adding the two values gives the total.</button>
+      </div>
+      <div class="mc-feedback" id="mc4-feedback"></div>
+    </div>
+
+    <div id="mc5-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q5.</span> Now try a much higher baseline risk.</div>
+      <div class="explore-prompt">
+        <span class="e-label">▸ Try this on the left panel</span>
+        Set <strong>Earplugs % w/ loss = 25%</strong> (unchanged) and <strong>No protection % w/ loss = 80%</strong>. The earplugs group is the same as in the real study, but the comparison group fared much worse. <strong>What is the new ARR, and what does it tell you?</strong>
+      </div>
+      <div class="mc-options" id="mc5-options">
+        <button class="mc-option" onclick="answerMC(5, 'a', true)"><span class="marker">A.</span> ARR = 55 pp — the gap is much bigger because the comparison group's baseline risk is higher. ARR depends on both groups' actual risk levels, not just the relative difference.</button>
+        <button class="mc-option" onclick="answerMC(5, 'b', false)"><span class="marker">B.</span> ARR = 105 pp — adding both values together.</button>
+        <button class="mc-option" onclick="answerMC(5, 'c', false)"><span class="marker">C.</span> ARR = 30 pp — same as before; ARR doesn't depend on baseline risk.</button>
+        <button class="mc-option" onclick="answerMC(5, 'd', false)"><span class="marker">D.</span> ARR = 0.31 — the ratio of the two risks.</button>
+      </div>
+      <div class="mc-feedback" id="mc5-feedback"></div>
+    </div>
+
+    <div id="mc6-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q6.</span> The conceptual punch line — when same RR doesn't mean same ARR.</div>
+      <div class="explore-prompt">
+        <span class="e-label">▸ Try this on the left panel</span>
+        First, set <strong>Earplugs = 5%</strong> and <strong>No protection = 10%</strong>. Note the RR (5/10 = 0.50) and the ARR. Then set <strong>Earplugs = 40%</strong> and <strong>No protection = 80%</strong>. Note the RR (40/80 = 0.50) and the new ARR. <strong>What does this comparison reveal about RR and ARR?</strong>
+      </div>
+      <div class="mc-options" id="mc6-options">
+        <button class="mc-option" onclick="answerMC(6, 'a', false)"><span class="marker">A.</span> RR and ARR are always equal — the math just looks different.</button>
+        <button class="mc-option" onclick="answerMC(6, 'b', true)"><span class="marker">B.</span> The RR is identical (0.50 in both cases — earplugs halve the risk), but the ARR is very different: 5 pp in the first case versus 40 pp in the second. The same relative reduction has very different clinical impact depending on baseline risk.</button>
+        <button class="mc-option" onclick="answerMC(6, 'c', false)"><span class="marker">C.</span> The ARR is identical in both cases because the proportions are.</button>
+        <button class="mc-option" onclick="answerMC(6, 'd', false)"><span class="marker">D.</span> The RR changes but the ARR stays the same.</button>
+      </div>
+      <div class="mc-feedback" id="mc6-feedback"></div>
+    </div>
+
+    <div class="takeaways" id="takeaways" style="display:none;">
+      <h3>Big takeaways</h3>
+      <h2>What ARR will tell you in any paper</h2>
+      <ul>
+        <li><strong>ARR is the difference between two risks</strong> — risk in the comparison group <em>minus</em> risk in the treatment group. It's a subtraction, not a ratio.</li>
+        <li><strong>ARR's null value is 0, not 1.</strong> Both groups identical → difference is zero. When you read CIs for ARR, check whether they cross 0.</li>
+        <li><strong>ARR is in percentage points, not percent.</strong> A drop from 55% to 25% is 30 percentage points. Saying "30%" without "points" is the most common reporting error.</li>
+        <li><strong>ARR makes RR concrete.</strong> Two studies can have identical RR but very different ARR. ARR is what tells the patient: "X fewer per 100 — this is what the treatment actually buys you."</li>
+        <li><strong>ARR is the bridge to NNT.</strong> If ARR is 30 percentage points (0.30 as a proportion), then 1/0.30 ≈ 3 to 4 — and that's how many patients you'd need to fit with earplugs to prevent one case of hearing loss. That's Number Needed to Treat, coming up in Part 4.</li>
+      </ul>
+    </div>
+
+    <div class="nav-bar">
+      <a href="part2.html" class="nav-btn secondary">← Back to Part 2</a>
+      <span class="completion-msg" id="completion-msg"></span>
+      <a href="part4.html" class="nav-btn" id="next-btn" style="pointer-events:none; opacity:0.5;">Continue to Part 4 →</a>
+    </div>
+
+  </section>
+</main>
+
+<script>
+  const ORIG = { earplugs: 25, control: 55 };
+
+  const state = {
+    arrRevealed: false,
+    sparedHighlighted: false,
+    calcShown: false,
+    answered: { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false },
+    correct:  { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false },
+    highlighted: { 1: false, 2: false, 3: false },
+    step2Visited: { big: false, zero: false, flip: false }
+  };
+
+  function highlight(n) {
+    state.highlighted[n] = true;
+    const cls = n === 1 ? 'on' : (n === 2 ? 'on-2' : 'on-3');
+    document.getElementById('hi-' + n).classList.add(cls);
+    document.getElementById('annot-' + n).classList.add('show');
+    const btn = document.getElementById('hi-btn-' + n);
+    btn.classList.add('done');
+    btn.disabled = true;
+    updateStepCounter();
+  }
+
+  // Step 2 — stacked bars with gap
+  function updateStep2() {
+    const ctrl = parseInt(document.getElementById('step2-slider-control').value, 10);
+    const ep = parseInt(document.getElementById('step2-slider-earplugs').value, 10);
+
+    document.getElementById('step2-bar-control').style.width = ctrl + '%';
+    document.getElementById('step2-bar-earplugs').style.width = ep + '%';
+    document.getElementById('step2-pct-control').textContent = ctrl + '%';
+    document.getElementById('step2-pct-earplugs').textContent = ep + '%';
+
+    const arr = ctrl - ep;
+    const gapBar = document.getElementById('step2-gap-bar');
+
+    if (arr >= 0) {
+      // Positive ARR — gap is between earplugs (lower) and control (higher)
+      gapBar.style.marginLeft = ep + '%';
+      gapBar.style.width = arr + '%';
+      gapBar.style.background = 'repeating-linear-gradient(45deg, #FFC857, #FFC857 5px, #FFD980 5px, #FFD980 10px)';
+      gapBar.style.borderColor = '#E5B143';
+      document.getElementById('step2-gap-pct').textContent = '+' + arr + ' pp';
+      document.getElementById('step2-gap-pct').style.color = '#8B6914';
+    } else {
+      // Negative ARR — earplugs higher than control
+      gapBar.style.marginLeft = ctrl + '%';
+      gapBar.style.width = (-arr) + '%';
+      gapBar.style.background = 'repeating-linear-gradient(45deg, #C0504D, #C0504D 5px, #D86863 5px, #D86863 10px)';
+      gapBar.style.borderColor = '#8B2B1F';
+      document.getElementById('step2-gap-pct').textContent = arr + ' pp';
+      document.getElementById('step2-gap-pct').style.color = '#8B2B1F';
+    }
+  }
+
+  function step2Prompt(scenario) {
+    let ep, ctrl;
+    if (scenario === 'big')      { ctrl = 70; ep = 10; }
+    else if (scenario === 'zero'){ ctrl = 40; ep = 40; }
+    else                          { ctrl = 20; ep = 60; }   // negative ARR
+
+    document.getElementById('step2-slider-control').value = ctrl;
+    document.getElementById('step2-slider-earplugs').value = ep;
+    updateStep2();
+
+    const btn = document.getElementById('prompt-btn-' + scenario);
+    btn.classList.add('visited');
+    state.step2Visited[scenario] = true;
+  }
+
+  // Step 3 — Dot grids
+  function buildGrids() {
+    const ep = document.getElementById('grid-earplugs');
+    const ctrl = document.getElementById('grid-control');
+    for (let i = 0; i < 100; i++) {
+      const d1 = document.createElement('div');
+      d1.className = 'dot';
+      d1.id = 'ep-dot-' + i;
+      if (i < 25) d1.classList.add('earplugs-loss');
+      ep.appendChild(d1);
+
+      const d2 = document.createElement('div');
+      d2.className = 'dot';
+      d2.id = 'ctrl-dot-' + i;
+      if (i < 55) d2.classList.add('control-loss');
+      ctrl.appendChild(d2);
+    }
+  }
+
+  function highlightSpared() {
+    if (state.sparedHighlighted) return;
+    state.sparedHighlighted = true;
+    const btn = document.getElementById('grid-btn');
+    btn.classList.add('done');
+    btn.disabled = true;
+    btn.textContent = '✓ Highlighted';
+
+    // The 30 patients spared by earplugs are the dots at positions 25-54 in the control grid
+    // (those would have lost hearing without earplugs but didn't because they had them)
+    let i = 25;
+    const interval = setInterval(() => {
+      if (i >= 55) { clearInterval(interval); return; }
+      document.getElementById('ctrl-dot-' + i).classList.add('spared');
+      i++;
+    }, 40);
+
+    setTimeout(() => {
+      document.getElementById('spared-callout').style.display = 'block';
+    }, 200);
+
+    updateStepCounter();
+  }
+
+  // Step 4 — Calc reveal
+  function showCalcResult() {
+    if (state.calcShown) return;
+    state.calcShown = true;
+    document.getElementById('calc-result').classList.add('show');
+    document.getElementById('calc-cursor').style.display = 'none';
+    const btn = document.getElementById('calc-btn');
+    btn.classList.add('done');
+    btn.disabled = true;
+    btn.textContent = '✓ Shown';
+    updateStepCounter();
+  }
+
+  function revealARR() {
+    if (state.arrRevealed) return;
+    state.arrRevealed = true;
+    const card = document.getElementById('arr-card');
+    card.classList.remove('locked');
+    card.classList.add('revealed');
+    document.getElementById('arr-value').textContent = '+30 pp';
+    document.getElementById('arr-ci').textContent = '95% CI [18%, 42%] · p < .001';
+
+    document.getElementById('arr-scale-wrap').style.display = 'block';
+    updatePanelScale(30);
+
+    updateStepCounter();
+    unlockMC(1);
+  }
+
+  function unlockSliders() {
+    document.getElementById('sliders-box').classList.remove('locked');
+  }
+
+  function onSliderChange() {
+    const ep = parseInt(document.getElementById('slider-earplugs').value, 10);
+    const ctrl = parseInt(document.getElementById('slider-control').value, 10);
+
+    document.getElementById('slider-earplugs-val').textContent = ep + '%';
+    document.getElementById('slider-control-val').textContent = ctrl + '%';
+
+    document.getElementById('cell-ep-loss').textContent = ep;
+    document.getElementById('cell-ep-no').textContent = 100 - ep;
+    document.getElementById('cell-ctrl-loss').textContent = ctrl;
+    document.getElementById('cell-ctrl-no').textContent = 100 - ctrl;
+
+    document.getElementById('bar-earplugs').style.width = ep + '%';
+    document.getElementById('bar-earplugs-pct').textContent = ep + '%';
+    document.getElementById('bar-control').style.width = ctrl + '%';
+    document.getElementById('bar-control-pct').textContent = ctrl + '%';
+
+    // Update gap visualization
+    const arr = ctrl - ep;
+    const gapBar = document.getElementById('gap-bar');
+    if (arr >= 0) {
+      gapBar.style.marginLeft = ep + '%';
+      gapBar.style.width = arr + '%';
+      gapBar.style.background = 'repeating-linear-gradient(45deg, #FFC857, #FFC857 4px, #FFD980 4px, #FFD980 8px)';
+      gapBar.style.borderColor = '#E5B143';
+      document.getElementById('gap-pct').textContent = '+' + arr + ' pp';
+      document.getElementById('gap-pct').style.color = '#8B6914';
+    } else {
+      gapBar.style.marginLeft = ctrl + '%';
+      gapBar.style.width = (-arr) + '%';
+      gapBar.style.background = 'repeating-linear-gradient(45deg, #C0504D, #C0504D 4px, #D86863 4px, #D86863 8px)';
+      gapBar.style.borderColor = '#8B2B1F';
+      document.getElementById('gap-pct').textContent = arr + ' pp';
+      document.getElementById('gap-pct').style.color = '#8B2B1F';
+    }
+
+    // Update ARR card
+    const arrDisplay = (arr >= 0 ? '+' : '') + arr + ' pp';
+    document.getElementById('arr-value').textContent = arrDisplay;
+
+    document.getElementById('arr-formula').textContent =
+      `ARR = ${ctrl}% − ${ep}% = ${arr} percentage points`;
+
+    if (ep === ORIG.earplugs && ctrl === ORIG.control) {
+      document.getElementById('arr-ci').textContent = '95% CI [18%, 42%] · p < .001';
+    } else {
+      document.getElementById('arr-ci').textContent = '(exploration mode — CI applies to original values)';
+    }
+
+    if (state.arrRevealed) updatePanelScale(arr);
+  }
+
+  function arrToPct(arr) {
+    // ARR ranges -100 to +100. Map to 0–100% on the bar.
+    // 0 sits at center (50%). +100 → 100%. -100 → 0%.
+    let val = (arr / 100) * 50 + 50;
+    if (val < 0) val = 0;
+    if (val > 100) val = 100;
+    return val;
+  }
+
+  function updatePanelScale(arr) {
+    const pct = arrToPct(arr);
+    document.getElementById('arr-marker-panel').style.left = pct + '%';
+
+    const display = (arr >= 0 ? '+' : '') + arr + ' pp';
+    document.getElementById('arr-marker-pill-panel').textContent = display;
+
+    const readout = document.getElementById('arr-readout-bar-panel');
+    readout.classList.remove('protective', 'neutral', 'harmful');
+    if (arr > 2) {
+      readout.classList.add('protective');
+      readout.innerHTML = `Earplugs reduce risk by ${arr} percentage points (protective effect)`;
+    } else if (arr >= -2) {
+      readout.classList.add('neutral');
+      readout.innerHTML = 'No meaningful difference between groups';
+    } else {
+      readout.classList.add('harmful');
+      readout.innerHTML = `Earplugs associated with ${-arr} pp higher risk (harmful direction)`;
+    }
+  }
+
+  function resetSliders() {
+    document.getElementById('slider-earplugs').value = ORIG.earplugs;
+    document.getElementById('slider-control').value = ORIG.control;
+    onSliderChange();
+  }
+
+  const feedbackText = {
+    1: {
+      correct: "<strong>Correct.</strong> ARR translates directly into a count: out of every 100 treated patients, about 30 fewer will have the outcome. This is what makes ARR clinically actionable — it's the number patients can hold onto.",
+      b: "<strong>Not quite.</strong> '30% lower' is ambiguous and easy to misread. ARR is in percentage points, not a relative reduction. The actual relative reduction here would be about 55% (from RR = 0.45). Mixing the two is one of the most common errors in clinical communication.",
+      c: "<strong>Not quite.</strong> ARR doesn't describe a cure rate. It compares two groups' risks of a specific outcome and tells you the absolute gap between them in percentage points.",
+      d: "<strong>Not quite.</strong> 'Reduce to 30% of what it was' would describe an RR of 0.30 — a different statistic. ARR describes the absolute drop in percentage points (55 → 25 = 30 pp), not a multiplicative shrinkage."
+    },
+    2: {
+      correct: "<strong>Correct.</strong> For ARR, the null value is 0 (not 1, like RR). Because the entire interval [18%, 42%] sits above 0, you can rule out 'no difference' at the 95% level. The interval also gives you a sense of precision — the true ARR is plausibly anywhere from a 18 pp to a 42 pp reduction.",
+      a: "<strong>Not quite.</strong> The point estimate (30%) being inside the CI is expected — that's the nature of confidence intervals. Significance comes from the relationship to the null value (0 for ARR), not whether the point estimate is inside the interval.",
+      c: "<strong>Not quite.</strong> 1 is the null for RR (a ratio), not for ARR (a difference). For ARR, the null value is 0 — when both groups have identical risk, the difference is zero.",
+      d: "<strong>Not quite.</strong> A 95% CI does not describe where 95% of patients fall. It describes the range of plausible values for the population ARR, given the data."
+    },
+    3: {
+      correct: "<strong>Correct.</strong> RR and ARR answer different clinical questions. RR (a ratio) tells you the relative effect — how many times more or less likely one group is. ARR (a difference) tells you the absolute clinical impact — how many fewer patients per 100 will have the outcome. Same study, different stories. The next question (Q6) will let you see this with sliders.",
+      a: "<strong>Not quite.</strong> They're not interchangeable. They use different math (division vs. subtraction), have different null values (1 vs. 0), and answer different clinical questions.",
+      b: "<strong>Not quite.</strong> Both can be calculated from a 2×2 table, yes — but that doesn't make them the same thing. Mean and median can both be calculated from the same dataset and they're still distinct statistics.",
+      c: "<strong>Not quite.</strong> Their null values are <em>different</em>: RR's null is 1 (ratio of equal risks), ARR's null is 0 (difference of equal risks). This is a key distinction for reading confidence intervals."
+    },
+    4: {
+      correct: "<strong>Correct.</strong> When both groups have identical risk (40% / 40%), the difference is 40 − 40 = 0 percentage points. ARR = 0 is the null value — it represents 'the treatment makes no absolute difference.' This is the ARR equivalent of RR = 1.00.",
+      a: "<strong>Not quite.</strong> ARR is the <em>difference</em> between the two groups, not the percentage in either group. When both groups are at 40%, the difference is 40 − 40 = 0, regardless of what the matching value is.",
+      b: "<strong>Not quite.</strong> ARR's null value is 0, not 1 (that's for RR). When the groups match, the difference collapses to zero.",
+      d: "<strong>Not quite.</strong> ARR is calculated by subtraction, not addition. Both groups at 40% means the difference is zero."
+    },
+    5: {
+      correct: "<strong>Correct.</strong> ARR = 80% − 25% = 55 percentage points. Same earplugs, but a much higher baseline risk in the comparison group means the absolute number of patients spared is much larger. This is why ARR depends on baseline risk — and why two trials of the same intervention can produce very different ARR values depending on the population studied.",
+      b: "<strong>Not quite.</strong> ARR is calculated by subtraction, not addition. 80 − 25 = 55, not 105.",
+      c: "<strong>Not quite.</strong> ARR is the absolute gap between the two groups. When you change the comparison group's risk, the gap changes — and so does ARR.",
+      d: "<strong>Not quite.</strong> 0.31 would be the new RR (25/80). ARR is the difference: 80 − 25 = 55 percentage points."
+    },
+    6: {
+      correct: "<strong>Correct — and this is the conceptual punch line of Part 3.</strong> Both scenarios have the same RR (earplugs halve the risk), but the absolute clinical impact is dramatically different: in the low-risk population, only 5 fewer patients per 100 are spared; in the high-risk population, 40 fewer per 100. This is why ARR matters: it tells you how meaningful that 'halving' actually is for real patients. A 50% reduction sounds the same in both cases, but in clinical reality, only one is a major intervention.",
+      a: "<strong>Not quite.</strong> RR and ARR can give very different impressions of the same effect. RR captures the relative magnitude; ARR captures the absolute magnitude. Try the slider exercise to see — they're not equivalent.",
+      c: "<strong>Not quite.</strong> The ARRs are very different (5 pp vs. 40 pp). Same RR ≠ same ARR. That's the point of the exercise.",
+      d: "<strong>Not quite.</strong> The RR stays the same (0.50 in both scenarios). What changes dramatically is the ARR (5 pp vs. 40 pp), reflecting the very different absolute clinical impact."
+    }
+  };
+
+  function answerMC(qNum, choice, isCorrect) {
+    if (state.answered[qNum]) return;
+    state.answered[qNum] = true;
+    state.correct[qNum] = isCorrect;
+
+    const buttons = document.querySelectorAll('#mc' + qNum + '-options .mc-option');
+    buttons.forEach(btn => { btn.disabled = true; });
+
+    const chosenBtn = Array.from(buttons).find(btn =>
+      btn.getAttribute('onclick').includes("'" + choice + "'")
+    );
+    if (chosenBtn) {
+      chosenBtn.classList.add(isCorrect ? 'selected-correct' : 'selected-wrong');
+    }
+    if (!isCorrect) {
+      buttons.forEach(btn => {
+        const onClick = btn.getAttribute('onclick');
+        if (onClick.includes('true')) btn.classList.add('show-correct');
+      });
+    }
+
+    const fb = document.getElementById('mc' + qNum + '-feedback');
+    fb.classList.remove('correct', 'incorrect');
+    fb.classList.add(isCorrect ? 'correct' : 'incorrect');
+    fb.innerHTML = isCorrect ? feedbackText[qNum].correct : feedbackText[qNum][choice];
+
+    if (qNum < 6) {
+      unlockMC(qNum + 1);
+      if (qNum === 3) unlockSliders();
+    } else {
+      finalize();
+    }
+    updateStepCounter();
+  }
+
+  function unlockMC(qNum) {
+    const block = document.getElementById('mc' + qNum + '-block');
+    if (block) block.classList.add('unlocked');
+  }
+
+  function finalize() {
+    const allCorrect = state.correct[1] && state.correct[2] && state.correct[3] && state.correct[4] && state.correct[5] && state.correct[6];
+    const msg = document.getElementById('completion-msg');
+    msg.textContent = allCorrect ? '✓ All six correct — excellent work.' : '✓ Section complete. Review feedback as needed.';
+    document.getElementById('takeaways').style.display = 'block';
+    const nextBtn = document.getElementById('next-btn');
+    nextBtn.style.pointerEvents = 'auto';
+    nextBtn.style.opacity = '1';
+  }
+
+  function updateStepCounter() {
+    let step = 1;
+    if (state.highlighted[1] || state.highlighted[2] || state.highlighted[3]) step = 2;
+    if (state.sparedHighlighted) step = 3;
+    if (state.calcShown) step = 4;
+    if (state.arrRevealed) step = 5;
+    if (state.answered[3]) step = 6;
+    document.getElementById('step-counter').textContent = step;
+  }
+
+  buildGrids();
+  resetSliders();
+  updateStep2();
+</script>
+</body>
+</html>
