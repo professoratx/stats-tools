@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 5 Activity — Part 1a: Welcome &amp; Orientation</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Calibri, "Segoe UI", Tahoma, sans-serif; background: #F0F3F5; color: #172940; line-height: 1.55; min-height: 100vh; font-size: 16.5px; }
+  .header { background: #172940; color: white; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid #2E8FAF; }
+  .header-left { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .header h1 { font-size: 23px; font-weight: 700; }
+  .header .part-label { font-size: 13.5px; color: #FFC857; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+  .progress-pill { background: rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 20px; font-size: 13.5px; color: #F0F3F5; }
+  .progress-pill strong { color: #FFC857; }
+
+  .container { max-width: 920px; margin: 0 auto; padding: 28px 32px 60px; display: flex; flex-direction: column; gap: 22px; }
+
+  .panel { background: white; border-radius: 12px; box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08); padding: 26px 30px; border-left: 5px solid #2E8FAF; }
+  .panel h2 { color: #172940; font-size: 21px; font-weight: 700; margin-bottom: 12px; }
+  .panel p { color: #2c3e50; font-size: 16.5px; line-height: 1.7; margin-bottom: 12px; }
+  .panel p:last-child { margin-bottom: 0; }
+  .panel p strong { color: #172940; }
+
+  /* Welcome / orientation panel — dark */
+  .welcome { background: #172940; color: white; border-left: 5px solid #FFC857; padding: 32px 34px; }
+  .welcome .subtitle { color: #FFC857; font-size: 13px; text-transform: uppercase; letter-spacing: 1.6px; font-weight: 700; margin-bottom: 8px; }
+  .welcome h1 { color: white; font-size: 28px; font-weight: 700; margin-bottom: 14px; line-height: 1.25; }
+  .welcome p { color: #F0F3F5; font-size: 16.5px; line-height: 1.7; margin-bottom: 14px; }
+  .welcome p:last-of-type { margin-bottom: 0; }
+  .welcome strong { color: #FFC857; }
+
+  /* Roadmap of 7 parts */
+  .roadmap { background: rgba(255,255,255,0.07); border-radius: 8px; padding: 18px 20px; margin-top: 18px; }
+  .roadmap-title { color: #FFC857; font-size: 12.5px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; margin-bottom: 12px; }
+  .roadmap-list { list-style: none; padding: 0; margin: 0; }
+  .roadmap-list li { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: 14.5px; color: #F0F3F5; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .roadmap-list li:last-child { border-bottom: none; }
+  .roadmap-list .num { background: #2E8FAF; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .roadmap-list .here { color: #FFC857; font-weight: 700; }
+  .roadmap-list .here .num { background: #FFC857; color: #172940; }
+  .roadmap-list strong { color: white; }
+
+  /* Four values preview card */
+  .four-preview { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin: 14px 0 4px; }
+  .preview-card { background: white; border: 1px solid #d8dde2; border-radius: 10px; padding: 16px 18px; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+  .preview-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(23, 41, 64, 0.10); }
+  .preview-card.rr { border-top: 4px solid #2E8FAF; }
+  .preview-card.arr { border-top: 4px solid #246F89; }
+  .preview-card.nnt { border-top: 4px solid #C0504D; }
+  .preview-card.or { border-top: 4px solid #FFC857; }
+  .preview-card .pc-name { font-family: "Cambria Math", Cambria, serif; font-size: 22px; font-weight: 700; color: #172940; margin-bottom: 4px; }
+  .preview-card.rr .pc-name { color: #2E8FAF; }
+  .preview-card.arr .pc-name { color: #246F89; }
+  .preview-card.nnt .pc-name { color: #C0504D; }
+  .preview-card.or .pc-name { color: #8B6914; }
+  .preview-card .pc-full { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.8px; color: #616467; font-weight: 700; margin-bottom: 8px; }
+  .preview-card .pc-desc { font-size: 14px; color: #2c3e50; line-height: 1.55; }
+  .preview-card .pc-meet { font-size: 12px; color: #2E8FAF; font-weight: 600; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #d8dde2; }
+
+  /* Prevalence note (lighter, off-white) */
+  .prev-note { background: #FFF8E1; border-left: 4px solid #FFC857; border-radius: 8px; padding: 18px 22px; }
+  .prev-note .pn-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: #8B6914; font-weight: 700; margin-bottom: 6px; }
+  .prev-note p { color: #5a4a10; font-size: 15.5px; line-height: 1.6; margin-bottom: 10px; }
+  .prev-note p:last-child { margin-bottom: 0; }
+  .prev-note p strong { color: #172940; }
+
+  /* Lens flipper - main interactive piece */
+  .lens-section { background: white; border-radius: 12px; box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08); padding: 26px 30px; border-left: 5px solid #FFC857; }
+  .lens-section h2 { color: #172940; font-size: 21px; font-weight: 700; margin-bottom: 6px; }
+  .lens-section .lens-subhead { font-size: 13.5px; text-transform: uppercase; letter-spacing: 1.2px; color: #2E8FAF; font-weight: 700; margin-bottom: 10px; }
+  .lens-section > p { color: #2c3e50; font-size: 16px; line-height: 1.7; margin-bottom: 14px; }
+  .lens-section > p strong { color: #172940; }
+
+  .scenario-card { background: #F8FAFB; border: 1px solid #d8dde2; border-radius: 10px; padding: 18px 22px; margin: 16px 0; }
+  .scenario-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: #2E8FAF; font-weight: 700; margin-bottom: 6px; }
+  .scenario-text { font-family: Georgia, "Times New Roman", serif; font-size: 15.5px; color: #2c3e50; line-height: 1.7; }
+  .scenario-text strong { color: #172940; }
+
+  /* The 2x2 mini table */
+  .mini-22 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; margin: 14px 0; border-radius: 6px; overflow: hidden; border: 1px solid #d8dde2; }
+  .mini-22 > div { padding: 10px 12px; text-align: center; font-size: 13.5px; border-bottom: 1px solid #d8dde2; border-right: 1px solid #d8dde2; }
+  .mini-22 > div:nth-child(3n) { border-right: none; }
+  .mini-22 > div:nth-last-child(-n+3) { border-bottom: none; }
+  .mini-22 .h { background: #172940; color: white; font-weight: 700; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.6px; }
+  .mini-22 .lbl { background: #2E8FAF; color: white; font-weight: 600; text-align: left; padding-left: 14px; }
+  .mini-22 .case { background: #FBEAE7; color: #8B2B1F; font-weight: 700; }
+  .mini-22 .nocase { background: #E8F4EC; color: #1B5E3F; font-weight: 700; }
+
+  /* The lens toggle */
+  .lens-toggle-wrap { display: flex; flex-direction: column; align-items: center; margin: 18px 0 10px; }
+  .lens-toggle-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1.2px; color: #616467; font-weight: 700; margin-bottom: 10px; }
+  .lens-toggle { display: inline-flex; background: #EAF3F7; border: 2px solid #2E8FAF; border-radius: 28px; padding: 4px; gap: 4px; }
+  .lens-btn { background: transparent; color: #2E8FAF; border: none; padding: 9px 20px; border-radius: 22px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.25s ease; letter-spacing: 0.3px; }
+  .lens-btn:hover:not(.active) { background: rgba(46, 143, 175, 0.12); }
+  .lens-btn.active.protective { background: #2D8B5A; color: white; box-shadow: 0 2px 8px rgba(45, 139, 90, 0.3); }
+  .lens-btn.active.risk { background: #C0504D; color: white; box-shadow: 0 2px 8px rgba(192, 80, 77, 0.3); }
+
+  /* Lens display panel */
+  .lens-display { background: #F8FAFB; border: 1.5px solid #d8dde2; border-radius: 12px; padding: 22px 26px; margin-top: 14px; transition: all 0.45s ease; }
+  .lens-display.protective { background: linear-gradient(180deg, #F4FAF6 0%, #FAFCFA 100%); border-color: #B8D9C5; }
+  .lens-display.risk { background: linear-gradient(180deg, #FDF5F4 0%, #FCFAFA 100%); border-color: #F4C7C2; }
+  .lens-display .ld-frame { font-size: 12.5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 8px; }
+  .lens-display.protective .ld-frame { color: #1B5E3F; }
+  .lens-display.risk .ld-frame { color: #8B2B1F; }
+  .lens-display .ld-headline { font-size: 18px; color: #172940; font-weight: 700; line-height: 1.4; margin-bottom: 14px; }
+
+  .ld-stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  .ld-stat { background: white; border-radius: 8px; padding: 12px 14px; border-left: 3px solid #2E8FAF; }
+  .lens-display.protective .ld-stat { border-left-color: #2D8B5A; }
+  .lens-display.risk .ld-stat { border-left-color: #C0504D; }
+  .ld-stat-name { font-family: "Cambria Math", Cambria, serif; font-weight: 700; font-size: 15px; color: #172940; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+  .ld-stat-text { font-size: 13.5px; color: #2c3e50; line-height: 1.5; }
+  .ld-stat-text strong { color: #172940; }
+
+  .ld-takeaway { background: #172940; color: white; padding: 12px 16px; border-radius: 6px; font-size: 14.5px; line-height: 1.55; margin-top: 10px; }
+  .ld-takeaway strong { color: #FFC857; }
+
+  .lens-explore-prompt { background: white; border: 1.5px dashed #2E8FAF; border-radius: 8px; padding: 12px 16px; margin-top: 14px; font-size: 14px; color: #2c3e50; line-height: 1.5; text-align: center; }
+  .lens-explore-prompt strong { color: #172940; }
+
+  .both-revealed-msg { background: #E8F4EC; border: 1px solid #2D8B5A; border-radius: 8px; padding: 12px 16px; margin-top: 14px; font-size: 14.5px; color: #1B5E3F; line-height: 1.55; display: none; }
+  .both-revealed-msg.show { display: block; animation: fadeIn 0.5s ease; }
+  .both-revealed-msg strong { color: #172940; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Nav */
+  .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 0 0; }
+  .nav-btn { background: #2E8FAF; color: white; border: none; padding: 14px 32px; border-radius: 8px; font-size: 15.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s ease; text-decoration: none; display: inline-block; }
+  .nav-btn:hover { background: #246F89; transform: translateY(-1px); }
+  .nav-btn.locked { background: #c5cdd3; cursor: not-allowed; pointer-events: none; }
+  .nav-btn.secondary { background: white; color: #2E8FAF; border: 2px solid #2E8FAF; }
+  .nav-btn.secondary:hover { background: #EAF3F7; }
+  .nav-completion { color: #2D8B5A; font-size: 14.5px; font-weight: 600; flex-grow: 1; text-align: center; margin: 0 16px; }
+
+  @media (max-width: 720px) { .four-preview { grid-template-columns: 1fr; } .ld-stat-grid { grid-template-columns: 1fr; } .header { padding: 14px 18px; flex-direction: column; gap: 8px; align-items: flex-start; } .container { padding: 18px; } }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <h1>Unit 5: Epidemiology Activity</h1>
+    <span class="part-label">Part 1a of 7 · Welcome &amp; Orientation</span>
+  </div>
+  <div class="progress-pill">Section <strong id="section-counter">1</strong> of 4</div>
+</header>
+
+<main class="container">
+
+  <!-- Welcome -->
+  <section class="welcome">
+    <div class="subtitle">Welcome to Unit 5</div>
+    <h1>Reading epidemiology like a clinician</h1>
+    <p>Every clinical journal you'll read in OT or audiology uses the language of <strong>epidemiology</strong> — risk ratios, odds ratios, absolute risk reduction, number needed to treat. These four numbers tell you how much an intervention helps, how much an exposure harms, and how often you'll actually see it in your caseload.</p>
+    <p>This activity walks you through all four — one at a time, anchored to a single mock article, with interactive practice. By the end, you'll be able to read any epidemiology paper with confidence and translate the findings to a patient or colleague.</p>
+
+    <div class="roadmap">
+      <div class="roadmap-title">The 7 parts ahead</div>
+      <ul class="roadmap-list">
+        <li class="here"><span class="num">1a</span><span><strong>Welcome &amp; orientation</strong> — you are here</span></li>
+        <li><span class="num">1b</span><span>Mock article + confidence check</span></li>
+        <li><span class="num">2</span><span>Relative Risk (RR)</span></li>
+        <li><span class="num">3</span><span>Absolute Risk Reduction (ARR)</span></li>
+        <li><span class="num">4</span><span>Number Needed to Treat (NNT)</span></li>
+        <li><span class="num">5</span><span>Odds Ratio (OR)</span></li>
+        <li><span class="num">6</span><span>Apply it — a new article in OT</span></li>
+        <li><span class="num">7</span><span>Post-assessment + certificate</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Section 1: What is epi -->
+  <section class="panel">
+    <h2>What is epidemiology, and why does an OT or AuD care?</h2>
+    <p><strong>Epidemiology</strong> is the study of how often health conditions occur in groups of people, and what factors influence those rates. For clinicians, it's the bridge between research and practice: how much does an intervention actually help? How dangerous is a particular exposure? Will the effect be big enough to matter for the patient sitting in front of you?</p>
+    <p>If you've ever read a study and felt unsure whether a "significant" finding was actually <em>clinically</em> meaningful — that's epidemiological literacy. It's a learnable skill, and it's the focus of this activity.</p>
+  </section>
+
+  <!-- Section 2: The four values preview -->
+  <section class="panel">
+    <h2>The four values you'll learn to read</h2>
+    <p>Every epidemiology paper that compares groups (a treatment vs. control, or an exposure vs. no exposure) reports some combination of these four statistics. You'll meet each one in detail in Parts 2–5.</p>
+
+    <div class="four-preview">
+      <div class="preview-card rr">
+        <div class="pc-name">RR</div>
+        <div class="pc-full">Relative Risk</div>
+        <div class="pc-desc">A ratio comparing the risk of an outcome between two groups. RR = 1 means equal risk; RR &lt; 1 means lower risk in the exposed/treated group; RR &gt; 1 means higher.</div>
+        <div class="pc-meet">▸ You'll meet this in Part 2</div>
+      </div>
+      <div class="preview-card arr">
+        <div class="pc-name">ARR / ARI</div>
+        <div class="pc-full">Absolute Risk Reduction (or Increase)</div>
+        <div class="pc-desc">The actual percentage-point difference in risk between two groups. RR tells you the ratio; ARR tells you the magnitude in real terms.</div>
+        <div class="pc-meet">▸ You'll meet this in Part 3</div>
+      </div>
+      <div class="preview-card nnt">
+        <div class="pc-name">NNT / NNH</div>
+        <div class="pc-full">Number Needed to Treat (or Harm)</div>
+        <div class="pc-desc">How many patients need to be treated (or exposed) for one extra outcome — beneficial or harmful. The most patient-friendly statistic of the four.</div>
+        <div class="pc-meet">▸ You'll meet this in Part 4</div>
+      </div>
+      <div class="preview-card or">
+        <div class="pc-name">OR</div>
+        <div class="pc-full">Odds Ratio</div>
+        <div class="pc-desc">A ratio of odds (not risks) between two groups. Looks like RR but uses different math. Common in case-control studies and logistic regression.</div>
+        <div class="pc-meet">▸ You'll meet this in Part 5</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Prevalence note -->
+  <section class="panel">
+    <h2>A quick note on prevalence</h2>
+    <p>You'll occasionally see <strong>prevalence</strong> reported in epi papers — it's the proportion of people in a population who have a condition at a given time (e.g., "the prevalence of presbycusis among adults over 70 is approximately 50%"). It tells you how common something is, but not whether one group is at higher risk than another.</p>
+
+    <div class="prev-note">
+      <div class="pn-label">In this activity</div>
+      <p>We won't focus on prevalence calculations. Recognize the term when you see it, and know that <strong>prevalence describes how common a condition is</strong>, while RR, ARR, NNT, and OR all describe <strong>how exposure or treatment changes risk between groups</strong>. Different questions, different statistics.</p>
+    </div>
+  </section>
+
+  <!-- Section 4: The lens flipper -->
+  <section class="lens-section">
+    <div class="lens-subhead">Try this before you move on</div>
+    <h2>The same data, two lenses</h2>
+    <p>One key idea before we dive in: <strong>the same statistical methods can describe protective effects and risk factors</strong>. The math doesn't change — only the language does. Below is a single set of patient outcomes. Click each lens to see how the same numbers get described in completely different ways depending on which group is the "exposure."</p>
+
+    <div class="scenario-card">
+      <div class="scenario-label">The data</div>
+      <div class="scenario-text">A study followed 200 young adults working at music venues for 12 months. Half consistently used hearing protection (earplugs); half did not. Measurable hearing loss developed in <strong>25/100 of the earplug users</strong> and <strong>55/100 of those without protection</strong>.</div>
+
+      <div class="mini-22">
+        <div class="h"></div>
+        <div class="h">Hearing loss</div>
+        <div class="h">No hearing loss</div>
+        <div class="lbl">Earplugs</div>
+        <div class="case">25</div>
+        <div class="nocase">75</div>
+        <div class="lbl">No protection</div>
+        <div class="case">55</div>
+        <div class="nocase">45</div>
+      </div>
+    </div>
+
+    <div class="lens-toggle-wrap">
+      <span class="lens-toggle-label">Try each lens — click to flip</span>
+      <div class="lens-toggle">
+        <button class="lens-btn protective" id="btn-protective" onclick="setLens('protective')">▸ Protective lens</button>
+        <button class="lens-btn risk" id="btn-risk" onclick="setLens('risk')">▸ Risk-factor lens</button>
+      </div>
+    </div>
+
+    <div class="lens-explore-prompt" id="lens-prompt">
+      <strong>Click a lens above</strong> to see the same data described as either a protective effect (earplugs help) or a risk factor (no protection harms).
+    </div>
+
+    <div class="lens-display" id="lens-display" style="display:none;">
+      <div class="ld-frame" id="ld-frame"></div>
+      <div class="ld-headline" id="ld-headline"></div>
+      <div class="ld-stat-grid" id="ld-stat-grid"></div>
+      <div class="ld-takeaway" id="ld-takeaway"></div>
+    </div>
+
+    <div class="both-revealed-msg" id="both-msg">
+      <strong>★ Notice:</strong> the underlying numbers are <em>identical</em> — 25 vs. 55 patients with hearing loss in the two groups. Whether we call earplugs "protective" or no-protection "harmful" is a framing choice. The math, the null values, and the conclusions all line up perfectly between the two lenses. <strong>Once you can read one, you can read the other.</strong>
+    </div>
+  </section>
+
+  <!-- Nav -->
+  <div class="nav-bar">
+    <span></span>
+    <span class="nav-completion" id="nav-msg">Try both lenses to continue.</span>
+    <a href="part1b.html" class="nav-btn locked" id="next-btn">Continue to Part 1b →</a>
+  </div>
+
+</main>
+
+<script>
+  const state = {
+    viewedLenses: { protective: false, risk: false },
+    currentLens: null
+  };
+
+  const lensContent = {
+    protective: {
+      frame: 'Protective lens — Parts 2–5 framing',
+      headline: '"Earplugs reduced hearing loss by more than half over 12 months."',
+      stats: [
+        { name: 'RR = 0.45', text: 'The risk of hearing loss in earplug users was <strong>45% of the risk</strong> in the no-protection group — i.e., a 55% reduction.' },
+        { name: 'ARR = 30 percentage points', text: '<strong>30 fewer cases per 100</strong> patients when comparing earplug users to those without protection.' },
+        { name: 'NNT ≈ 4', text: 'Fit <strong>roughly 4 patients with earplugs</strong>, and you prevent 1 case of hearing loss compared to no protection.' },
+        { name: 'OR = 0.27', text: 'The <strong>odds</strong> of hearing loss in the earplug group were 27% of the odds in the no-protection group.' }
+      ],
+      takeaway: '<strong>Same data, protective framing:</strong> earplugs are the intervention; the comparison is no-protection. Statistics are below 1 (for ratios) and use ARR / NNT (the "good" versions).'
+    },
+    risk: {
+      frame: 'Risk-factor lens — Part 6 framing',
+      headline: '"Working unprotected at music venues more than doubled the risk of hearing loss."',
+      stats: [
+        { name: 'RR = 2.20', text: 'The risk of hearing loss in unprotected workers was <strong>2.2× the risk</strong> in earplug users — i.e., a 120% increase.' },
+        { name: 'ARI = 30 percentage points', text: '<strong>30 extra cases per 100</strong> patients when comparing no-protection to earplug users.' },
+        { name: 'NNH ≈ 4', text: '<strong>Roughly 4 unprotected workers</strong> over a year produces 1 extra case of hearing loss compared to using earplugs.' },
+        { name: 'OR = 3.67', text: 'The <strong>odds</strong> of hearing loss in the unprotected group were 3.67× the odds in the earplug group.' }
+      ],
+      takeaway: '<strong>Same data, risk-factor framing:</strong> no-protection is the exposure; the comparison is earplugs. Statistics are above 1 (for ratios) and use ARI / NNH (the "harm" versions).'
+    }
+  };
+
+  function setLens(lens) {
+    state.viewedLenses[lens] = true;
+    state.currentLens = lens;
+
+    // Toggle button states
+    document.querySelectorAll('.lens-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('btn-' + lens).classList.add('active');
+
+    // Hide prompt, show display
+    document.getElementById('lens-prompt').style.display = 'none';
+    const display = document.getElementById('lens-display');
+    display.style.display = 'block';
+    display.classList.remove('protective', 'risk');
+    display.classList.add(lens);
+
+    const c = lensContent[lens];
+    document.getElementById('ld-frame').textContent = c.frame;
+    document.getElementById('ld-headline').textContent = c.headline;
+
+    const grid = document.getElementById('ld-stat-grid');
+    grid.innerHTML = c.stats.map(s =>
+      '<div class="ld-stat"><div class="ld-stat-name">' + s.name + '</div><div class="ld-stat-text">' + s.text + '</div></div>'
+    ).join('');
+
+    document.getElementById('ld-takeaway').innerHTML = c.takeaway;
+
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const both = state.viewedLenses.protective && state.viewedLenses.risk;
+    const counter = document.getElementById('section-counter');
+    const navMsg = document.getElementById('nav-msg');
+    const nextBtn = document.getElementById('next-btn');
+    const bothMsg = document.getElementById('both-msg');
+
+    if (both) {
+      counter.textContent = '4';
+      nextBtn.classList.remove('locked');
+      navMsg.textContent = '✓ Ready — continue to Part 1b for the mock article.';
+      bothMsg.classList.add('show');
+    } else if (state.viewedLenses.protective || state.viewedLenses.risk) {
+      counter.textContent = '4';
+      navMsg.textContent = 'Try the other lens to see the contrast.';
+    }
+  }
+</script>
+</body>
+</html>

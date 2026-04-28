@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 5 Activity — Part 6: Apply It</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Calibri, "Segoe UI", Tahoma, sans-serif; background: #F0F3F5; color: #172940; line-height: 1.55; min-height: 100vh; font-size: 16.5px; }
+  .header { background: #172940; color: white; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid #2E8FAF; }
+  .header-left { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .header h1 { font-size: 23px; font-weight: 700; }
+  .header .part-label { font-size: 13.5px; color: #FFC857; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+  .progress-pill { background: rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 20px; font-size: 13.5px; color: #F0F3F5; }
+  .progress-pill strong { color: #FFC857; }
+  .container { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px 32px 60px; max-width: 1500px; margin: 0 auto; }
+  .left-panel { background: white; border-radius: 12px; box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08); padding: 26px 26px 22px; position: sticky; top: 24px; height: fit-content; max-height: calc(100vh - 48px); overflow-y: auto; }
+  .left-panel h2 { font-size: 19px; color: #172940; margin-bottom: 4px; font-weight: 700; }
+  .left-panel .subtitle { color: #616467; font-size: 14px; margin-bottom: 18px; }
+  .panel-section-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: #2E8FAF; font-weight: 700; margin-bottom: 8px; margin-top: 18px; }
+
+  .contingency { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; margin-bottom: 6px; }
+  .contingency th, .contingency td { padding: 10px 8px; text-align: center; border: 1px solid #d8dde2; }
+  .contingency th { background: #172940; color: white; font-weight: 600; font-size: 12.5px; }
+  .contingency th:first-child { background: transparent; border: none; }
+  .contingency .row-label { background: #C0504D; color: white; font-weight: 600; text-align: left; padding: 11px 10px; font-size: 13px; }
+  .contingency .row-label.unexposed { background: #2E8FAF; }
+  .contingency .group-total { background: #F0F3F5; font-weight: 700; color: #172940; }
+  .contingency .cell-event { background: #FBEAE7; font-weight: 700; font-size: 17px; color: #8B2B1F; }
+  .contingency .cell-no { background: #E8F4EC; font-weight: 700; font-size: 17px; color: #1B5E3F; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+  .stat-card-mini { background: white; border: 1.5px solid #d8dde2; border-radius: 8px; padding: 12px 10px; text-align: center; }
+  .stat-card-mini.rr { border-top: 4px solid #C0504D; }
+  .stat-card-mini.ari { border-top: 4px solid #FFC857; }
+  .stat-card-mini.nnh { border-top: 4px solid #2E8FAF; }
+  .stat-card-mini.or { border-top: 4px solid #246F89; }
+  .stat-card-mini .smini-label { font-size: 11px; color: #616467; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px; }
+  .stat-card-mini.rr .smini-label { color: #8B2B1F; }
+  .stat-card-mini.ari .smini-label { color: #8B6914; }
+  .stat-card-mini.nnh .smini-label { color: #2E8FAF; }
+  .stat-card-mini.or .smini-label { color: #246F89; }
+  .stat-card-mini .smini-value { font-size: 24px; font-weight: 700; color: #172940; line-height: 1; font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+  .stat-card-mini .smini-ci { font-size: 11.5px; color: #616467; font-variant-numeric: tabular-nums; line-height: 1.3; }
+  .stat-card-mini.sig .smini-ci { color: #1B5E3F; font-weight: 600; }
+  .stat-card-mini.notsig .smini-ci { color: #8B2B1F; font-weight: 600; }
+
+  .study-meta { background: #F8FAFB; border: 1px solid #d8dde2; border-radius: 8px; padding: 12px 14px; margin-top: 14px; font-size: 13px; color: #616467; line-height: 1.55; }
+  .study-meta .meta-label { font-size: 11px; color: #2E8FAF; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 6px; }
+  .study-meta strong { color: #172940; }
+
+  .right-panel { display: flex; flex-direction: column; gap: 18px; }
+  .step { background: white; border-radius: 12px; box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08); padding: 24px 26px; border-left: 5px solid #2E8FAF; }
+  .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .step-number { background: #2E8FAF; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+  .step-title { font-size: 18.5px; font-weight: 700; color: #172940; }
+  .step-body { color: #2c3e50; font-size: 16px; line-height: 1.7; }
+  .step-body p { margin-bottom: 12px; }
+  .step-body p:last-child { margin-bottom: 0; }
+  .step-body strong { color: #172940; }
+
+  .article-excerpt { background: #F8FAFB; border: 1px solid #d8dde2; border-left: 4px solid #172940; border-radius: 6px; padding: 18px 22px; margin: 14px 0; font-family: Georgia, "Times New Roman", serif; color: #2c3e50; font-size: 15.5px; line-height: 1.75; }
+  .article-excerpt .article-meta { font-size: 12.5px; font-family: Calibri, sans-serif; color: #616467; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .article-excerpt h4 { font-family: Georgia, serif; font-size: 16px; color: #172940; margin: 14px 0 6px; font-weight: 700; }
+  .article-excerpt h4:first-child { margin-top: 0; }
+
+  .stat-display-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+  .stat-display-card { background: white; border-radius: 10px; padding: 18px 20px; text-align: center; border: 1px solid #d8dde2; box-shadow: 0 2px 8px rgba(23, 41, 64, 0.06); }
+  .stat-display-card.rr { border-top: 4px solid #C0504D; }
+  .stat-display-card.ari { border-top: 4px solid #FFC857; }
+  .stat-display-card.nnh { border-top: 4px solid #2E8FAF; }
+  .stat-display-card.or { border-top: 4px solid #246F89; }
+  .stat-display-card .sd-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #616467; font-weight: 700; margin-bottom: 6px; }
+  .stat-display-card.rr .sd-label { color: #8B2B1F; }
+  .stat-display-card.ari .sd-label { color: #8B6914; }
+  .stat-display-card.nnh .sd-label { color: #2E8FAF; }
+  .stat-display-card.or .sd-label { color: #246F89; }
+  .stat-display-card .sd-value { font-size: 36px; font-weight: 700; color: #172940; line-height: 1; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+  .stat-display-card .sd-ci { font-size: 13px; color: #616467; font-variant-numeric: tabular-nums; }
+  .stat-display-card .sd-ci strong { color: #1B5E3F; }
+  .stat-display-card .sd-meaning { font-size: 13.5px; color: #2c3e50; line-height: 1.5; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ecf0f1; font-family: Calibri, sans-serif; }
+
+  .translation-table { background: #F8FAFB; border: 1px solid #d8dde2; border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
+  .translation-grid { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 1px; background: #d8dde2; border-radius: 6px; overflow: hidden; }
+  .translation-cell { background: white; padding: 11px 14px; font-size: 14px; }
+  .translation-cell.head { background: #172940; color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; font-size: 12px; text-align: center; }
+  .translation-cell.protective { background: #E8F4EC; color: #1B5E3F; font-weight: 600; }
+  .translation-cell.risk-factor { background: #FBEAE7; color: #8B2B1F; font-weight: 600; }
+
+  /* Interactive translation reveal — Step 2 */
+  .ttable { background: #F8FAFB; border: 1px solid #d8dde2; border-radius: 10px; padding: 16px 18px; margin: 14px 0; }
+  .ttable-key { display: flex; gap: 18px; margin-bottom: 12px; font-size: 13px; flex-wrap: wrap; }
+  .ttable-key .key-item { display: flex; align-items: center; gap: 6px; }
+  .ttable-key .key-swatch { width: 14px; height: 14px; border-radius: 3px; }
+  .ttable-key .key-swatch.protective { background: #B8D9C5; border: 1px solid #1B5E3F; }
+  .ttable-key .key-swatch.risk { background: #F4C7C2; border: 1px solid #8B2B1F; }
+  .ttable-grid { display: grid; grid-template-columns: 110px 1fr 1fr; gap: 8px; }
+  .ttable-grid .th { background: #172940; color: white; padding: 9px 10px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; border-radius: 5px; text-align: center; }
+  .ttable-grid .stat-label { background: #EAF3F7; color: #172940; padding: 14px 12px; font-weight: 700; font-size: 13.5px; border-radius: 5px; display: flex; align-items: center; }
+  .ttable-cell { padding: 12px 14px; border-radius: 5px; font-size: 13.5px; line-height: 1.5; min-height: 60px; display: flex; flex-direction: column; justify-content: center; transition: all 0.35s ease; position: relative; }
+  .ttable-cell.empty { background: white; border: 1.5px dashed #c8d0d6; }
+  .ttable-cell.empty .reveal-btn-mini { background: white; color: #2E8FAF; border: 1.5px solid #2E8FAF; padding: 6px 12px; border-radius: 5px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.18s ease; align-self: center; }
+  .ttable-cell.empty .reveal-btn-mini:hover { background: #EAF3F7; }
+  .ttable-cell.empty.protective-empty .reveal-btn-mini { color: #1B5E3F; border-color: #2D8B5A; }
+  .ttable-cell.empty.protective-empty .reveal-btn-mini:hover { background: #E8F4EC; }
+  .ttable-cell.empty.risk-empty .reveal-btn-mini { color: #8B2B1F; border-color: #C0504D; }
+  .ttable-cell.empty.risk-empty .reveal-btn-mini:hover { background: #FBEAE7; }
+  .ttable-cell.revealed.protective { background: #E8F4EC; color: #1B5E3F; border: 1.5px solid #B8D9C5; animation: revealIn 0.45s ease; }
+  .ttable-cell.revealed.risk { background: #FBEAE7; color: #8B2B1F; border: 1.5px solid #F4C7C2; animation: revealIn 0.45s ease; }
+  .ttable-cell .stat-formula { font-family: "Cambria Math", Cambria, serif; font-weight: 700; font-size: 14px; }
+  .ttable-cell .stat-language { font-family: Calibri, sans-serif; font-weight: 500; font-style: italic; font-size: 13px; margin-top: 4px; }
+  .ttable-cell .stat-language strong { font-style: normal; font-weight: 700; }
+  @keyframes revealIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .ttable-null-row { grid-column: 1 / -1; background: #172940; color: white; padding: 12px 16px; border-radius: 5px; margin-top: 4px; text-align: center; font-size: 13.5px; }
+  .ttable-null-row strong { color: #FFC857; }
+  .ttable-null-row .stat-formula { font-family: "Cambria Math", Cambria, serif; color: #FFC857; }
+  .ttable-progress { font-size: 12.5px; color: #616467; text-align: center; margin-top: 12px; font-style: italic; transition: color 0.3s ease; }
+  .ttable-progress.complete { color: #2D8B5A; font-weight: 600; }
+
+  .mc-block { background: white; border-radius: 12px; box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08); padding: 24px 26px; border-top: 5px solid #FFC857; opacity: 0.45; pointer-events: none; transition: opacity 0.4s ease; }
+  .mc-block.unlocked { opacity: 1; pointer-events: auto; }
+  .mc-block.first-unlocked { opacity: 1; pointer-events: auto; }
+  .mc-block .stat-tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 3px 10px; border-radius: 4px; margin-bottom: 10px; }
+  .mc-block .stat-tag.rr { background: #FBEAE7; color: #8B2B1F; }
+  .mc-block .stat-tag.ari { background: #FFF8E1; color: #8B6914; }
+  .mc-block .stat-tag.nnh { background: #EAF3F7; color: #246F89; }
+  .mc-block .stat-tag.or { background: #E8EDF0; color: #246F89; }
+  .mc-block .stat-tag.synthesis { background: #172940; color: #FFC857; }
+  .mc-block .stat-tag.twist { background: #C0504D; color: white; }
+
+  .mc-question { font-size: 17px; font-weight: 700; color: #172940; margin-bottom: 14px; line-height: 1.5; }
+  .mc-question .q-num { color: #2E8FAF; margin-right: 6px; }
+  .mc-options { display: flex; flex-direction: column; gap: 10px; }
+  .mc-option { background: #F8FAFB; border: 2px solid #d8dde2; border-radius: 8px; padding: 13px 17px; cursor: pointer; font-size: 15.5px; color: #2c3e50; text-align: left; transition: all 0.18s ease; font-family: inherit; width: 100%; line-height: 1.55; }
+  .mc-option:hover:not(:disabled) { border-color: #2E8FAF; background: #EAF3F7; }
+  .mc-option:disabled { cursor: default; }
+  .mc-option.selected-correct { background: #E8F4EC; border-color: #2D8B5A; color: #1B5E3F; font-weight: 600; }
+  .mc-option.selected-wrong { background: #FBEAE7; border-color: #C0504D; color: #8B2B1F; }
+  .mc-option.show-correct { background: #E8F4EC; border-color: #2D8B5A; color: #1B5E3F; font-weight: 600; }
+  .mc-option .marker { display: inline-block; font-weight: 700; margin-right: 8px; color: #2E8FAF; }
+  .mc-feedback { margin-top: 14px; padding: 15px 17px; border-radius: 8px; font-size: 15px; line-height: 1.6; display: none; }
+  .mc-feedback.correct { background: #E8F4EC; border-left: 4px solid #2D8B5A; color: #1B5E3F; display: block; }
+  .mc-feedback.incorrect { background: #FBEAE7; border-left: 4px solid #C0504D; color: #8B2B1F; display: block; }
+  .mc-feedback strong { display: block; margin-bottom: 4px; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .mc-callout { background: #FFF8E1; border-left: 3px solid #FFC857; padding: 11px 15px; border-radius: 4px; margin-bottom: 14px; font-size: 14.5px; color: #5a4a10; line-height: 1.55; }
+  .mc-callout strong { color: #172940; }
+
+  .takeaways { background: #172940; color: white; border-radius: 12px; padding: 28px 30px; border-left: 5px solid #FFC857; }
+  .takeaways h3 { color: #FFC857; font-size: 13.5px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; font-weight: 700; }
+  .takeaways h2 { font-size: 23px; color: white; margin-bottom: 18px; font-weight: 700; }
+  .takeaways ul { list-style: none; padding: 0; margin: 0; }
+  .takeaways li { padding: 13px 0 13px 38px; border-bottom: 1px solid rgba(255,255,255,0.12); position: relative; font-size: 15.5px; line-height: 1.65; color: #F0F3F5; }
+  .takeaways li:last-child { border-bottom: none; }
+  .takeaways li::before { content: "✓"; position: absolute; left: 0; top: 13px; width: 24px; height: 24px; border-radius: 50%; background: #FFC857; color: #172940; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 13.5px; }
+  .takeaways li strong { color: white; }
+
+  .nav-bar { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 18px 0 0; margin-top: 8px; }
+  .nav-btn { background: #2E8FAF; color: white; border: none; padding: 14px 30px; border-radius: 8px; font-size: 15.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s ease; text-decoration: none; display: inline-block; }
+  .nav-btn:hover { background: #246F89; transform: translateY(-1px); }
+  .nav-btn.secondary { background: white; color: #2E8FAF; border: 2px solid #2E8FAF; }
+  .nav-btn.secondary:hover { background: #EAF3F7; }
+  .completion-msg { color: #2D8B5A; font-size: 14.5px; font-weight: 600; text-align: center; flex-grow: 1; margin: 0 20px; }
+
+  @media (max-width: 1100px) { .container { grid-template-columns: 1fr; } .left-panel { position: relative; top: auto; max-height: none; } }
+  @media (max-width: 600px) { .header { padding: 14px 18px; flex-direction: column; gap: 8px; align-items: flex-start; } .container { padding: 16px; } .stat-grid { grid-template-columns: 1fr; } .stat-display-grid { grid-template-columns: 1fr; } .translation-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <h1>Unit 5: Epidemiology Activity</h1>
+    <span class="part-label">Part 6 of 7 · Apply It</span>
+  </div>
+  <div class="progress-pill"><strong id="q-counter">0</strong> of 8 questions</div>
+</header>
+
+<main class="container">
+
+  <aside class="left-panel">
+    <h2>Reference card</h2>
+    <p class="subtitle">Sustained computer use &amp; RSI · n = 400</p>
+
+    <div class="panel-section-label">2 × 2 Table</div>
+    <table class="contingency">
+      <thead>
+        <tr><th></th><th>Developed RSI</th><th>No RSI</th><th>Total</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">≥6 hr/day (high)</td>
+          <td class="cell-event">60</td>
+          <td class="cell-no">140</td>
+          <td class="group-total">200</td>
+        </tr>
+        <tr>
+          <td class="row-label unexposed">&lt;3 hr/day (low)</td>
+          <td class="cell-event">24</td>
+          <td class="cell-no">176</td>
+          <td class="group-total">200</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="panel-section-label">Primary findings</div>
+    <div class="stat-grid">
+      <div class="stat-card-mini rr sig">
+        <div class="smini-label">RR</div>
+        <div class="smini-value">2.50</div>
+        <div class="smini-ci">[1.62, 3.86] · sig</div>
+      </div>
+      <div class="stat-card-mini ari sig">
+        <div class="smini-label">ARI</div>
+        <div class="smini-value">18 pp</div>
+        <div class="smini-ci">[10%, 26%] · sig</div>
+      </div>
+      <div class="stat-card-mini nnh sig">
+        <div class="smini-label">NNH</div>
+        <div class="smini-value">6</div>
+        <div class="smini-ci">[4, 10] · sig</div>
+      </div>
+      <div class="stat-card-mini or sig">
+        <div class="smini-label">OR</div>
+        <div class="smini-value">3.14</div>
+        <div class="smini-ci">[1.85, 5.34] · sig</div>
+      </div>
+    </div>
+
+    <div class="panel-section-label">Secondary finding</div>
+    <div class="stat-card-mini rr notsig" style="border-top-color: #8B9098;">
+      <div class="smini-label" style="color: #616467;">RR — Anti-fatigue mat use</div>
+      <div class="smini-value">0.78</div>
+      <div class="smini-ci">[0.55, 1.11] · not sig</div>
+    </div>
+
+    <div class="study-meta">
+      <div class="meta-label">Study design</div>
+      <strong>12-month prospective cohort</strong> · 400 office workers · primary outcome = clinically diagnosed hand/wrist RSI (carpal tunnel, de Quervain's, lateral epicondylitis) · exposure = self-reported sustained computer use, hours/day
+    </div>
+
+  </aside>
+
+  <section class="right-panel">
+
+    <div class="step" style="border-left-color:#FFC857; background: #172940;">
+      <div class="step-header">
+        <div class="step-number" style="background:#FFC857; color:#172940;">★</div>
+        <div class="step-title" style="color: white;">Apply what you've learned</div>
+      </div>
+      <div class="step-body" style="color: #F0F3F5;">
+        <p>You've worked through RR, ARR, NNT, and OR using a protective intervention (custom earplugs prevent hearing loss). Now flip the script: you're reading a study where the exposure <em>increases</em> risk. The math is identical — but the language changes. <strong style="color:#FFC857;">RR &gt; 1</strong> instead of RR &lt; 1. <strong style="color:#FFC857;">ARI</strong> (Absolute Risk Increase) instead of ARR. <strong style="color:#FFC857;">NNH</strong> (Number Needed to Harm) instead of NNT. The study below tracked office workers over 12 months. Your job: read it like a clinician.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-number">1</div><div class="step-title">The article</div></div>
+      <div class="step-body">
+        <div class="article-excerpt">
+          <div class="article-meta">From the Results section</div>
+          <h4>Sustained Computer Use and 12-Month Incidence of Hand/Wrist Repetitive Strain Injury in Office Workers</h4>
+          <p style="margin-top: 10px; font-style: italic; font-size: 14px; color: #616467;">A 12-month prospective cohort study (n = 400)</p>
+          <p>Among office workers reporting <strong>≥6 hours/day of sustained computer use</strong>, 60 of 200 (30.0%) developed clinically diagnosed hand or wrist RSI during the 12-month follow-up period. Among workers reporting <strong>&lt;3 hours/day of sustained computer use</strong>, 24 of 200 (12.0%) developed RSI.</p>
+          <p>Compared with the low-exposure group, high-exposure workers had a markedly increased risk of RSI (RR = 2.50, 95% CI [1.62, 3.86], <em>p</em> &lt; .001). The absolute risk increase was 18 percentage points (95% CI [10%, 26%]); the corresponding number needed to harm was 6 (95% CI [4, 10]). The odds ratio comparing high to low exposure was 3.14 (95% CI [1.85, 5.34]).</p>
+          <p>In a planned secondary analysis, regular use of an anti-fatigue mat at the workstation showed a suggestive but non-significant protective association with RSI (RR = 0.78, 95% CI [0.55, 1.11]).</p>
+        </div>
+        <p>Take a moment to read the excerpt and check the reference card on the left. Notice the framing language — "increased risk," "harm," "compared with the low-exposure group." That's how risk-factor studies talk.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-number">2</div><div class="step-title">Translation guide — protective vs. risk-factor</div></div>
+      <div class="step-body">
+        <p>Before we look at the numbers, let's get the language straight. The math behind RR, ARI/ARR, NNH/NNT, and OR is identical in protective and risk-factor studies — what changes is how you describe each statistic. Click each cell below to reveal how that statistic reads in either framing.</p>
+
+        <div class="ttable">
+          <div class="ttable-key">
+            <div class="key-item"><span class="key-swatch protective"></span><span>Protective framing (Parts 2–5)</span></div>
+            <div class="key-item"><span class="key-swatch risk"></span><span>Risk-factor framing (this study)</span></div>
+          </div>
+
+          <div class="ttable-grid">
+            <div class="th">Statistic</div>
+            <div class="th">Protective lens</div>
+            <div class="th">Risk-factor lens</div>
+
+            <div class="stat-label">Ratio</div>
+            <div class="ttable-cell empty protective-empty" id="cell-ratio-p">
+              <button class="reveal-btn-mini" onclick="revealCell('ratio','p')">▸ Reveal protective</button>
+            </div>
+            <div class="ttable-cell empty risk-empty" id="cell-ratio-r">
+              <button class="reveal-btn-mini" onclick="revealCell('ratio','r')">▸ Reveal risk-factor</button>
+            </div>
+
+            <div class="stat-label">Difference</div>
+            <div class="ttable-cell empty protective-empty" id="cell-diff-p">
+              <button class="reveal-btn-mini" onclick="revealCell('diff','p')">▸ Reveal protective</button>
+            </div>
+            <div class="ttable-cell empty risk-empty" id="cell-diff-r">
+              <button class="reveal-btn-mini" onclick="revealCell('diff','r')">▸ Reveal risk-factor</button>
+            </div>
+
+            <div class="stat-label">Patient count</div>
+            <div class="ttable-cell empty protective-empty" id="cell-count-p">
+              <button class="reveal-btn-mini" onclick="revealCell('count','p')">▸ Reveal protective</button>
+            </div>
+            <div class="ttable-cell empty risk-empty" id="cell-count-r">
+              <button class="reveal-btn-mini" onclick="revealCell('count','r')">▸ Reveal risk-factor</button>
+            </div>
+
+            <div class="stat-label">Odds</div>
+            <div class="ttable-cell empty protective-empty" id="cell-odds-p">
+              <button class="reveal-btn-mini" onclick="revealCell('odds','p')">▸ Reveal protective</button>
+            </div>
+            <div class="ttable-cell empty risk-empty" id="cell-odds-r">
+              <button class="reveal-btn-mini" onclick="revealCell('odds','r')">▸ Reveal risk-factor</button>
+            </div>
+
+            <div class="ttable-null-row">
+              <strong>Null value (no effect) is the same in both framings:</strong> <span class="stat-formula">RR = 1, OR = 1, ARR/ARI = 0</span>. Direction changes — the math doesn't.
+            </div>
+          </div>
+
+          <div class="ttable-progress" id="ttable-progress">Reveal each cell to compare the two framings (0 of 8 revealed)</div>
+        </div>
+
+        <p>Notice: the <em>structure</em> doesn't change between protective and risk-factor studies — only the direction of the effect and the language we use. Once you can read one, you can read the other.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-number">3</div><div class="step-title">The four numbers, side by side</div></div>
+      <div class="step-body">
+        <p>Here are the four primary statistics from this study — values and confidence intervals only. Use these as your reference card while you work through the questions below.</p>
+
+        <div class="stat-display-grid">
+          <div class="stat-display-card rr">
+            <div class="sd-label">Risk Ratio (RR)</div>
+            <div class="sd-value">2.50</div>
+            <div class="sd-ci">95% CI <strong>[1.62, 3.86]</strong></div>
+          </div>
+          <div class="stat-display-card ari">
+            <div class="sd-label">Absolute Risk Increase (ARI)</div>
+            <div class="sd-value">18 pp</div>
+            <div class="sd-ci">95% CI <strong>[10, 26]</strong></div>
+          </div>
+          <div class="stat-display-card nnh">
+            <div class="sd-label">Number Needed to Harm (NNH)</div>
+            <div class="sd-value">6</div>
+            <div class="sd-ci">95% CI <strong>[4, 10]</strong></div>
+          </div>
+          <div class="stat-display-card or">
+            <div class="sd-label">Odds Ratio (OR)</div>
+            <div class="sd-value">3.14</div>
+            <div class="sd-ci">95% CI <strong>[1.85, 5.34]</strong></div>
+          </div>
+        </div>
+
+        <p>Now read each question carefully. The reference card on the left stays visible the whole time, so you can keep checking the numbers as you work through.</p>
+      </div>
+    </div>
+
+    <div id="mc1-block" class="mc-block first-unlocked">
+      <span class="stat-tag rr">Q1 · RR interpretation</span>
+      <div class="mc-question"><span class="q-num">Q1.</span> What does <strong>RR = 2.50</strong> mean in this study?</div>
+      <div class="mc-options" id="mc1-options">
+        <button class="mc-option" onclick="answerMC(1, 'a', false)"><span class="marker">A.</span> The high-exposure group had a 2.5% chance of developing RSI.</button>
+        <button class="mc-option" onclick="answerMC(1, 'b', true)"><span class="marker">B.</span> The high-exposure group's risk of RSI is 2.5 times the risk of the low-exposure group — equivalently, 150% higher risk than the low-exposure group.</button>
+        <button class="mc-option" onclick="answerMC(1, 'c', false)"><span class="marker">C.</span> RSI is 2.5 times more common in office workers than in the general population.</button>
+        <button class="mc-option" onclick="answerMC(1, 'd', false)"><span class="marker">D.</span> 2.5 out of every 100 high-exposure workers will develop RSI.</button>
+      </div>
+      <div class="mc-feedback" id="mc1-feedback"></div>
+    </div>
+
+    <div id="mc2-block" class="mc-block">
+      <span class="stat-tag rr">Q2 · CI &amp; significance</span>
+      <div class="mc-question"><span class="q-num">Q2.</span> The RR of 2.50 has a 95% CI of [1.62, 3.86]. What can you conclude about this finding?</div>
+      <div class="mc-options" id="mc2-options">
+        <button class="mc-option" onclick="answerMC(2, 'a', false)"><span class="marker">A.</span> The result is not significant because the CI is so wide.</button>
+        <button class="mc-option" onclick="answerMC(2, 'b', false)"><span class="marker">B.</span> The CI tells us that 95% of high-exposure workers will have RR values between 1.62 and 3.86.</button>
+        <button class="mc-option" onclick="answerMC(2, 'c', false)"><span class="marker">C.</span> Because the CI excludes 0, the result is statistically significant.</button>
+        <button class="mc-option" onclick="answerMC(2, 'd', true)"><span class="marker">D.</span> The CI excludes 1 (the null value for RR), so the elevated risk is statistically significant. The true RR is plausibly anywhere from a 62% increase (RR = 1.62) to nearly a 4-fold increase (RR = 3.86) — meaningful in either case, but the wide range signals limited precision.</button>
+      </div>
+      <div class="mc-feedback" id="mc2-feedback"></div>
+    </div>
+
+    <div id="mc3-block" class="mc-block">
+      <span class="stat-tag ari">Q3 · ARI interpretation</span>
+      <div class="mc-question"><span class="q-num">Q3.</span> The ARI is reported as <strong>18 percentage points</strong> (95% CI [10, 26]). What does that mean clinically?</div>
+      <div class="mc-options" id="mc3-options">
+        <button class="mc-option" onclick="answerMC(3, 'a', true)"><span class="marker">A.</span> Sustained ≥6-hour computer use is associated with about 18 extra RSI cases per 100 workers over 12 months, compared with low-exposure workers. The CI suggests the true increase is plausibly between 10 and 26 extra cases per 100.</button>
+        <button class="mc-option" onclick="answerMC(3, 'b', false)"><span class="marker">B.</span> 18% of all office workers will develop RSI within a year.</button>
+        <button class="mc-option" onclick="answerMC(3, 'c', false)"><span class="marker">C.</span> The risk in the high-exposure group is 18% relative to the low-exposure group.</button>
+        <button class="mc-option" onclick="answerMC(3, 'd', false)"><span class="marker">D.</span> An 18-percentage-point increase is too small to be clinically meaningful.</button>
+      </div>
+      <div class="mc-feedback" id="mc3-feedback"></div>
+    </div>
+
+    <div id="mc4-block" class="mc-block">
+      <span class="stat-tag nnh">Q4 · NNH interpretation</span>
+      <div class="mc-question"><span class="q-num">Q4.</span> NNH = 6 (95% CI [4, 10]). Which clinical interpretation is most accurate?</div>
+      <div class="mc-options" id="mc4-options">
+        <button class="mc-option" onclick="answerMC(4, 'a', false)"><span class="marker">A.</span> 6 workers out of 100 will develop RSI.</button>
+        <button class="mc-option" onclick="answerMC(4, 'b', false)"><span class="marker">B.</span> The high-exposure group is 6 times more likely to develop RSI than the low-exposure group.</button>
+        <button class="mc-option" onclick="answerMC(4, 'c', false)"><span class="marker">C.</span> NNH = 6 means we'd need to treat 6 workers to prevent one RSI case.</button>
+        <button class="mc-option" onclick="answerMC(4, 'd', true)"><span class="marker">D.</span> For every 6 workers with high (≥6 hr/day) computer exposure, one extra worker develops RSI within a year who would not have developed it at low exposure. That's a clinically meaningful number — for context, a small office of 30 people in this exposure pattern would see roughly 5 extra cases per year.</button>
+      </div>
+      <div class="mc-feedback" id="mc4-feedback"></div>
+    </div>
+
+    <div id="mc5-block" class="mc-block">
+      <span class="stat-tag or">Q5 · OR vs. RR</span>
+      <div class="mc-question"><span class="q-num">Q5.</span> The OR (3.14) is noticeably larger than the RR (2.50), even though they're describing the same data. Why?</div>
+      <div class="mc-options" id="mc5-options">
+        <button class="mc-option" onclick="answerMC(5, 'a', false)"><span class="marker">A.</span> The authors made a calculation error.</button>
+        <button class="mc-option" onclick="answerMC(5, 'b', false)"><span class="marker">B.</span> OR is always larger than RR by design — they measure different things.</button>
+        <button class="mc-option" onclick="answerMC(5, 'c', true)"><span class="marker">C.</span> When the outcome is common (30% in the high-exposure group is well above the rare-outcome threshold of ~10%), OR diverges from RR — OR exaggerates the relative effect compared to RR. Both point the same direction and both are significant; they're just not interchangeable here.</button>
+        <button class="mc-option" onclick="answerMC(5, 'd', false)"><span class="marker">D.</span> OR is calculated only on the exposed group, so it's bigger.</button>
+      </div>
+      <div class="mc-feedback" id="mc5-feedback"></div>
+    </div>
+
+    <div id="mc6-block" class="mc-block">
+      <span class="stat-tag twist">Q6 · The twist · Reading non-significance</span>
+      <div class="mc-question"><span class="q-num">Q6.</span> The secondary analysis reports anti-fatigue mat use with <strong>RR = 0.78, 95% CI [0.55, 1.11]</strong>. The authors describe this as "suggestive but non-significant." How should you interpret this finding for clinical practice?</div>
+      <div class="mc-callout">
+        <strong>Tip:</strong> The point estimate (0.78) suggests a possible 22% reduction in risk. But pay close attention to the confidence interval and what null value matters here.
+      </div>
+      <div class="mc-options" id="mc6-options">
+        <button class="mc-option" onclick="answerMC(6, 'a', false)"><span class="marker">A.</span> The result is significant — RR = 0.78 is below 1, so anti-fatigue mats reduce RSI risk.</button>
+        <button class="mc-option" onclick="answerMC(6, 'b', true)"><span class="marker">B.</span> The CI [0.55, 1.11] crosses 1, so we cannot rule out "no effect" at the 95% level. The data are consistent with a 45% risk reduction, no effect at all, or even an 11% risk increase. Treating this as evidence of benefit overstates what the study can support — though a larger study might clarify the picture.</button>
+        <button class="mc-option" onclick="answerMC(6, 'c', false)"><span class="marker">C.</span> The result is significant because <em>p</em> &lt; .05 was reached for the primary analysis.</button>
+        <button class="mc-option" onclick="answerMC(6, 'd', false)"><span class="marker">D.</span> Anti-fatigue mats definitively don't help — RR = 0.78 proves the null hypothesis.</button>
+      </div>
+      <div class="mc-feedback" id="mc6-feedback"></div>
+    </div>
+
+    <div id="mc7-block" class="mc-block">
+      <span class="stat-tag rr">Q7 · Common misreading</span>
+      <div class="mc-question"><span class="q-num">Q7.</span> A colleague reads the article and writes the following in a workplace health newsletter: <em>"Heavy computer use increases your risk of RSI by 250%."</em> Is this an accurate translation of RR = 2.50?</div>
+      <div class="mc-options" id="mc7-options">
+        <button class="mc-option" onclick="answerMC(7, 'a', false)"><span class="marker">A.</span> Yes — RR = 2.50 means a 250% increase in risk. The colleague is correct.</button>
+        <button class="mc-option" onclick="answerMC(7, 'b', false)"><span class="marker">B.</span> No — RR = 2.50 means a 25% increase in risk.</button>
+        <button class="mc-option" onclick="answerMC(7, 'c', true)"><span class="marker">C.</span> No — RR = 2.50 means risk is 2.5 <em>times</em> the comparison group's risk, which translates to a <strong>150% increase</strong>, not a 250% increase. To convert RR to a percent increase, subtract 1 first: (2.50 − 1) × 100 = 150%. RR = 2.50 means the high-exposure group's risk is the comparison group's risk plus an additional 150% of that risk.</button>
+        <button class="mc-option" onclick="answerMC(7, 'd', false)"><span class="marker">D.</span> Yes — multiplying RR by 100 always gives the correct percent increase.</button>
+      </div>
+      <div class="mc-feedback" id="mc7-feedback"></div>
+    </div>
+
+    <div id="mc8-block" class="mc-block">
+      <span class="stat-tag synthesis">Q8 · Clinical synthesis</span>
+      <div class="mc-question"><span class="q-num">Q8.</span> An OT student you supervise asks: "I have a patient — a 38-year-old graphic designer who works ≥8 hours daily on a computer and is asymptomatic. Based on this study, should I recommend reducing her screen time?" Which response best integrates the statistics with clinical judgment?</div>
+      <div class="mc-options" id="mc8-options">
+        <button class="mc-option" onclick="answerMC(8, 'a', false)"><span class="marker">A.</span> "Yes — RR = 2.50 is statistically significant, so all high-exposure workers should reduce screen time immediately."</button>
+        <button class="mc-option" onclick="answerMC(8, 'b', false)"><span class="marker">B.</span> "No — the study just shows correlation, not causation, so we shouldn't change anything based on it."</button>
+        <button class="mc-option" onclick="answerMC(8, 'c', true)"><span class="marker">C.</span> "The study suggests a meaningful elevated risk: about 18 extra RSI cases per 100 workers per year (NNH = 6). For her, that translates to a real but not certain risk — most high-exposure workers in the study didn't develop RSI. A reasonable conversation would discuss ergonomic strategies (workstation setup, microbreaks, exercise), not just blunt screen-time reduction. The evidence supports preventive action, but tailored to her job demands and preferences."</button>
+        <button class="mc-option" onclick="answerMC(8, 'd', false)"><span class="marker">D.</span> "She has a 30% chance of developing RSI in the next year, so we should refer her for surgery prophylactically."</button>
+      </div>
+      <div class="mc-feedback" id="mc8-feedback"></div>
+    </div>
+
+    <div class="takeaways" id="takeaways" style="display:none;">
+      <h3>Big takeaways</h3>
+      <h2>Reading risk-factor studies — five things to remember</h2>
+      <ul>
+        <li><strong>The math doesn't change — just the language.</strong> RR, ARI, NNH, and OR for risk factors use identical formulas to RR, ARR, NNT, and OR for protective interventions. What changes is whether the ratio is &lt;1 or &gt;1, and whether you call the difference a reduction or an increase.</li>
+        <li><strong>RR &gt; 1 means percent increase = (RR − 1) × 100, not RR × 100.</strong> RR = 2.50 is a 150% increase in risk, not 250%. This is the most common misreading you'll encounter in workplace health communications and patient-facing materials.</li>
+        <li><strong>NNH is the harm-side mirror of NNT.</strong> Same formula (1 / |risk difference|), same interpretation rules — just describing extra cases of harm rather than extra cases prevented. A small NNH means strong harm; a small NNT means strong benefit.</li>
+        <li><strong>Non-significant ≠ no effect, and non-significant ≠ proven safe.</strong> When a CI crosses 1 (for ratios) or 0 (for differences), the data don't let you rule out the null. The point estimate may still be the best guess, but you can't claim significance — and you can't claim the intervention "doesn't work" either. Often the right read is: "results are inconclusive; a larger study could clarify."</li>
+        <li><strong>Statistical findings inform — they don't dictate — clinical decisions.</strong> A statistically significant elevated risk tells you something matters at the population level. Translating that into a recommendation for one patient still requires clinical judgment: their baseline risk, their context, their preferences, and the available alternatives. Up next in Part 7: the post-assessment.</li>
+      </ul>
+    </div>
+
+    <div class="nav-bar">
+      <a href="part5.html" class="nav-btn secondary">← Back to Part 5</a>
+      <span class="completion-msg" id="completion-msg"></span>
+      <a href="part7.html" class="nav-btn" id="next-btn" style="pointer-events:none; opacity:0.5;">Continue to Part 7 →</a>
+    </div>
+
+  </section>
+</main>
+
+<script>
+  const state = {
+    answered: { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false, 8: false },
+    correct:  { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false, 8: false },
+    revealed: { ratio_p: false, ratio_r: false, diff_p: false, diff_r: false, count_p: false, count_r: false, odds_p: false, odds_r: false }
+  };
+
+  // Content for each cell: protective vs. risk-factor framing for each statistic
+  const ttContent = {
+    ratio: {
+      p: {
+        formula: 'RR &lt; 1',
+        language: '<em>"The treated group\'s risk was a fraction of the comparison group\'s risk."</em><br><strong>Example:</strong> earplugs RR = 0.45 → 55% lower risk.'
+      },
+      r: {
+        formula: 'RR &gt; 1',
+        language: '<em>"The exposed group\'s risk was a multiple of the comparison group\'s risk."</em><br><strong>This study:</strong> RR = 2.50 → 150% higher risk.'
+      }
+    },
+    diff: {
+      p: {
+        formula: 'ARR (Absolute Risk Reduction)',
+        language: '<em>"How many fewer cases per 100 patients with treatment."</em><br><strong>Example:</strong> 30 fewer hearing-loss cases per 100.'
+      },
+      r: {
+        formula: 'ARI (Absolute Risk Increase)',
+        language: '<em>"How many extra cases per 100 patients with exposure."</em><br><strong>This study:</strong> 18 extra RSI cases per 100.'
+      }
+    },
+    count: {
+      p: {
+        formula: 'NNT (Number Needed to Treat)',
+        language: '<em>"How many patients we treat to prevent one case."</em><br><strong>Example:</strong> NNT = 4 → treat 4 to prevent 1 hearing loss.'
+      },
+      r: {
+        formula: 'NNH (Number Needed to Harm)',
+        language: '<em>"How many patients we expose for one extra case."</em><br><strong>This study:</strong> NNH = 6 → 6 high-exposure workers, 1 extra RSI.'
+      }
+    },
+    odds: {
+      p: {
+        formula: 'OR &lt; 1',
+        language: '<em>"The treated group\'s odds of the outcome are a fraction of the comparison group\'s odds."</em><br><strong>Example:</strong> earplugs OR = 0.27.'
+      },
+      r: {
+        formula: 'OR &gt; 1',
+        language: '<em>"The exposed group\'s odds of the outcome are a multiple of the comparison group\'s odds."</em><br><strong>This study:</strong> OR = 3.14.'
+      }
+    }
+  };
+
+  function revealCell(stat, side) {
+    const key = stat + '_' + side;
+    if (state.revealed[key]) return;
+    state.revealed[key] = true;
+
+    const cellId = 'cell-' + stat + '-' + side;
+    const cell = document.getElementById(cellId);
+    const data = ttContent[stat][side];
+    const cls = side === 'p' ? 'protective' : 'risk';
+
+    cell.classList.remove('empty', 'protective-empty', 'risk-empty');
+    cell.classList.add('revealed', cls);
+    cell.innerHTML = '<div class="stat-formula">' + data.formula + '</div><div class="stat-language">' + data.language + '</div>';
+
+    // Update progress text
+    const count = Object.values(state.revealed).filter(v => v).length;
+    const progress = document.getElementById('ttable-progress');
+    if (count === 8) {
+      progress.textContent = '✓ All eight cells revealed — ready for the questions below.';
+      progress.classList.add('complete');
+    } else {
+      progress.textContent = 'Reveal each cell to compare the two framings (' + count + ' of 8 revealed)';
+    }
+  }
+
+  const feedbackText = {
+    1: {
+      correct: "<strong>Correct.</strong> RR = 2.50 means the high-exposure group's risk is 2.5 times the comparison group's risk. To express that as a percent increase, subtract 1 first: (2.5 − 1) × 100 = 150% higher than the comparison group. We'll come back to that distinction in Q7 — it trips up a lot of clinicians and journalists.",
+      a: "<strong>Not quite.</strong> A '2.5% chance' is an absolute probability, not a ratio. The high-exposure group's actual risk is 60/200 = 30%. RR is a comparison between two groups, not a single group's probability.",
+      c: "<strong>Not quite.</strong> RR is a within-study comparison between two groups in this cohort — high-exposure workers vs. low-exposure workers. It does not compare office workers to the general population.",
+      d: "<strong>Not quite.</strong> 2.5 cases per 100 would be an absolute incidence (and a very low one — the actual incidence in the high-exposure group is 30 per 100). RR = 2.50 is a ratio, not a count."
+    },
+    2: {
+      correct: "<strong>Correct.</strong> RR uses 1.0 as its null value (equal risks → ratio of 1). The CI [1.62, 3.86] sits entirely above 1, so we can rule out 'no difference' at the 95% confidence level. The interval also tells you about precision: even at the lower bound, the elevated risk is meaningful (62% increase); at the upper bound, the increase is nearly 4-fold. The width of the interval is a fair signal that a larger study would tighten the estimate.",
+      a: "<strong>Not quite.</strong> A wide CI signals limited precision, not non-significance. The CI here excludes 1 (the null), so the result is significant — even with the wide range.",
+      b: "<strong>Not quite.</strong> A 95% CI does not mean 95% of patients have RR values in that range. It describes the range of plausible values for the population RR, given the observed data.",
+      c: "<strong>Not quite.</strong> The null value for RR is 1, not 0 (because RR is a ratio). For ARI (a difference), the null is 0. Don't mix the two — it's a frequent error."
+    },
+    3: {
+      correct: "<strong>Correct.</strong> ARI = 18 percentage points means roughly 18 extra cases per 100 workers attributable to the elevated exposure. Unlike RR, this absolute scale is what patients and policymakers actually care about — it tells you the real-world impact, not just a multiplier. The CI [10, 26] gives plausible bounds: at the low end, 10 extra cases per 100; at the high end, 26.",
+      b: "<strong>Not quite.</strong> ARI is the <em>difference</em> in absolute risk between two groups, not the absolute risk in any single group or in the overall population. The risk in the high-exposure group is 30%; in the low-exposure group, 12%. The difference is 18 percentage points.",
+      c: "<strong>Not quite.</strong> '18% relative risk' would be RR = 1.18, a small relative effect. But ARI = 18 percentage points means a difference of 18 cases per 100 — a substantial absolute effect, especially when the comparison group's risk is only 12%.",
+      d: "<strong>Not quite.</strong> 18 percentage points is a substantial effect — when baseline risk is 12%, an additional 18 percentage points represents a 2.5-fold increase in absolute risk. That's clinically significant, especially for an outcome (RSI) that meaningfully affects work and quality of life."
+    },
+    4: {
+      correct: "<strong>Correct.</strong> NNH translates statistical effect into countable harm. NNH = 6 means high-exposure work conditions produce 1 extra RSI case for every 6 high-exposure workers, compared to a low-exposure baseline. For an OT working in occupational health, that's a powerful number to share with employers and workers — it makes the elevated risk concrete and actionable.",
+      a: "<strong>Not quite.</strong> NNH is a comparative measure, not an absolute count. 'Out of 100' is the framing for incidence (which is 30%), not for NNH.",
+      b: "<strong>Not quite.</strong> '6 times more likely' would be RR = 6, not NNH = 6. NNH and RR carry different meanings — NNH is calculated as 1/ARI (1/0.18 ≈ 5.6, rounded to 6).",
+      c: "<strong>Not quite.</strong> 'Treat 6 to prevent one' is the NNT framing for a beneficial intervention. This study examines a risk factor, so the relevant statistic is NNH — the number exposed for one extra harm to occur."
+    },
+    5: {
+      correct: "<strong>Correct.</strong> The high-exposure group's outcome rate is 30% — well above the rare-outcome threshold (~10%) where OR ≈ RR. When outcomes are common, OR is more extreme than RR (further from 1), even though they describe the same direction of effect. RR (2.50) is generally the more interpretable statistic for cohort studies; OR is reported because it's the natural output of logistic regression. Both are statistically significant here (CIs exclude 1).",
+      a: "<strong>Not quite.</strong> OR and RR are different statistics with different formulas, both correctly calculated from the same data. The divergence isn't an error — it's expected when outcomes are common.",
+      b: "<strong>Not quite.</strong> When the outcome is rare (e.g., &lt;5%), OR ≈ RR. They diverge only as the outcome becomes more common. In this study, the 30% outcome rate puts us in the divergence zone.",
+      d: "<strong>Not quite.</strong> OR uses data from both groups — it's the cross-product (a × d) / (b × c) across all four cells of the 2×2 table, just like RR uses both groups."
+    },
+    6: {
+      correct: "<strong>Correct — and this is the most important question on this page.</strong> The CI [0.55, 1.11] includes the null value (1.0 for RR). That means the data are consistent with anything from a 45% risk reduction to an 11% risk increase. We cannot say anti-fatigue mats reduce RSI risk based on these data alone. 'Suggestive' language is common in articles when an effect points in an interesting direction but doesn't reach significance — it's an honest acknowledgment of uncertainty, not a euphemism for significance. A larger study could narrow the CI and clarify whether mats help, hurt, or do nothing.",
+      a: "<strong>Not quite.</strong> A point estimate below 1 doesn't make a result significant — the CI's relationship to 1 does. The CI here [0.55, 1.11] crosses 1, so we cannot rule out 'no effect' or even slight harm.",
+      c: "<strong>Not quite.</strong> Significance is determined for each analysis separately. The primary analysis was significant; the secondary analysis on mats is not. They're independent findings.",
+      d: "<strong>Not quite.</strong> A non-significant CI doesn't 'prove the null' — it just means we can't reject it. The point estimate (0.78) leaves open the possibility of a real effect; the data are simply too uncertain to conclude one way or the other. 'Insufficient evidence' is different from 'evidence of no effect.'"
+    },
+    7: {
+      correct: "<strong>Correct.</strong> This is one of the most common errors in clinical writing. RR is a ratio, not a percent. To convert: percent increase = (RR − 1) × 100. So RR = 2.50 → 150% increase, not 250%. Saying '250% increase' makes the risk sound 67% larger than it actually is, which is exactly the kind of error that makes patients distrust health information when they later learn the true number. Be the OT who gets this right.",
+      a: "<strong>Not quite.</strong> '250% increase' is the most common misreading. The correct conversion is (RR − 1) × 100. Saying 'risk is 2.5 times higher' or '150% increase' is accurate; saying '250% increase' overstates the effect.",
+      b: "<strong>Not quite.</strong> 25% increase corresponds to RR = 1.25. RR = 2.50 is much larger — a 150% increase.",
+      d: "<strong>Not quite.</strong> Multiplying RR by 100 gives the wrong answer. The correct formula subtracts 1 first: (RR − 1) × 100. This is because RR = 1 means 'no change' (0% increase), not '100% increase.'"
+    },
+    8: {
+      correct: "<strong>Correct.</strong> This is what good clinical reasoning looks like. The statistics are real and clinically meaningful — but applying them to one patient requires translating population-level risk into person-level guidance. A 30% incidence in the high-exposure group also means 70% of those workers did <em>not</em> develop RSI in 12 months. Tailored ergonomic intervention (microbreaks, posture, workstation setup, OT-specific assessment) is more actionable than blanket screen-time reduction, and it respects the patient's job demands. This is the synthesis Part 6 is designed to test: read the stats, then think clinically.",
+      a: "<strong>Not quite.</strong> Statistical significance at the population level doesn't translate into a directive 'all patients must change behavior.' Many high-exposure workers in the study didn't develop RSI; the risk is elevated but not deterministic. Clinical recommendations should consider individual factors — and ergonomic intervention may be more practical than reducing screen time for a working professional.",
+      b: "<strong>Not quite.</strong> While it's true that observational studies can't establish causation as definitively as RCTs, that doesn't mean the data are irrelevant. A 12-month prospective cohort with significant findings is meaningful evidence — strong enough to inform preventive recommendations, especially for a benign intervention like ergonomic counseling.",
+      d: "<strong>Not quite.</strong> 30% is the observed incidence in the high-exposure group from this study, but applying it to one asymptomatic patient as a personal probability ignores her individual factors (her ergonomic setup, posture, breaks, family history). And 'prophylactic surgery' is far beyond what this evidence supports — RSI prevention starts with conservative measures, not surgical intervention."
+    }
+  };
+
+  function answerMC(qNum, choice, isCorrect) {
+    if (state.answered[qNum]) return;
+    state.answered[qNum] = true;
+    state.correct[qNum] = isCorrect;
+
+    const buttons = document.querySelectorAll('#mc' + qNum + '-options .mc-option');
+    buttons.forEach(btn => { btn.disabled = true; });
+
+    const chosenBtn = Array.from(buttons).find(btn =>
+      btn.getAttribute('onclick').includes("'" + choice + "'")
+    );
+    if (chosenBtn) chosenBtn.classList.add(isCorrect ? 'selected-correct' : 'selected-wrong');
+    if (!isCorrect) {
+      buttons.forEach(btn => {
+        const onClick = btn.getAttribute('onclick');
+        if (onClick.includes('true')) btn.classList.add('show-correct');
+      });
+    }
+
+    const fb = document.getElementById('mc' + qNum + '-feedback');
+    fb.classList.remove('correct', 'incorrect');
+    fb.classList.add(isCorrect ? 'correct' : 'incorrect');
+    fb.innerHTML = isCorrect ? feedbackText[qNum].correct : feedbackText[qNum][choice];
+
+    if (qNum < 8) {
+      unlockMC(qNum + 1);
+    } else {
+      finalize();
+    }
+    updateCounter();
+  }
+
+  function unlockMC(qNum) {
+    const block = document.getElementById('mc' + qNum + '-block');
+    if (block) block.classList.add('unlocked');
+  }
+
+  function finalize() {
+    let correctCount = 0;
+    for (let i = 1; i <= 8; i++) if (state.correct[i]) correctCount++;
+    const msg = document.getElementById('completion-msg');
+    if (correctCount === 8) {
+      msg.textContent = '✓ Perfect — all 8 correct. You\'re reading like a clinician.';
+    } else {
+      msg.textContent = `✓ Section complete (${correctCount}/8 correct). Review feedback as needed.`;
+    }
+    document.getElementById('takeaways').style.display = 'block';
+    const nextBtn = document.getElementById('next-btn');
+    nextBtn.style.pointerEvents = 'auto';
+    nextBtn.style.opacity = '1';
+  }
+
+  function updateCounter() {
+    let count = 0;
+    for (let i = 1; i <= 8; i++) if (state.answered[i]) count++;
+    document.getElementById('q-counter').textContent = count;
+  }
+
+  updateCounter();
+</script>
+</body>
+</html>

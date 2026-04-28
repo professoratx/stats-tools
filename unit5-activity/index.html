@@ -39,7 +39,7 @@ body { font-family: Calibri, 'Trebuchet MS', sans-serif; background: #F0F3F5; co
 .header h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
 .header p { font-size: 15px; color: #8B9098; max-width: 600px; margin: 0 auto; }
 
-.container { max-width: 700px; margin: 0 auto; padding: 28px 16px; }
+.container { max-width: 720px; margin: 0 auto; padding: 28px 16px; }
 
 /* Instructions card */
 .info-card {
@@ -88,6 +88,17 @@ body { font-family: Calibri, 'Trebuchet MS', sans-serif; background: #F0F3F5; co
   font-weight: 700;
 }
 
+/* Section heading between groups of cards (subtle) */
+.section-heading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #8B9098;
+  margin: 16px 4px 8px;
+}
+.section-heading:first-child { margin-top: 0; }
+
 /* Part cards */
 .part-card {
   display: flex;
@@ -128,7 +139,7 @@ body { font-family: Calibri, 'Trebuchet MS', sans-serif; background: #F0F3F5; co
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -145,12 +156,13 @@ body { font-family: Calibri, 'Trebuchet MS', sans-serif; background: #F0F3F5; co
   color: #2D8659;
 }
 
-.part-content { flex: 1; }
+.part-content { flex: 1; min-width: 0; }
 .part-title {
   font-size: 0.95rem;
   font-weight: 700;
   color: #172940;
   margin-bottom: 2px;
+  line-height: 1.35;
 }
 .part-desc {
   font-size: 0.82rem;
@@ -204,21 +216,21 @@ body { font-family: Calibri, 'Trebuchet MS', sans-serif; background: #F0F3F5; co
   <a class="header-back" href="../">← Back to Stats Arcade</a><br>
   <div class="header-badge">Unit 5 Class Activity</div>
   <h1>Interpreting Epidemiological Studies</h1>
-  <p>A guided walkthrough of RR, OR, ARR, and NNT using interactive tools</p>
+  <p>A guided walkthrough of RR, ARR, NNT, and OR using interactive tools</p>
 </div>
 
 <div class="container">
 
   <div class="info-card">
     <strong>How this activity works</strong>
-    You will read a mock journal article, rate your confidence, and then explore four interactive tools — answering questions along the way. At the end, you'll re-rate your confidence and download a personalized completion certificate to submit to Canvas. Work through the parts in order; each one builds on the last.
+    Work through the parts in order. You'll start with a mock journal article and a confidence check, then learn each of the four core epidemiology statistics one at a time, then apply all four to a new article. At the end, you'll re-rate your confidence and download a personalized completion certificate to upload to Canvas.
   </div>
 
   <div class="device-note">
-    <strong>Best on a laptop or tablet.</strong> The interactive tools use sliders and tables that work best on a larger screen. If you must use a phone, rotate to landscape mode.
+    <strong>Best on a laptop or tablet.</strong> The interactive tools use sliders, tables, and side-by-side panels that work best on a larger screen. If you must use a phone, rotate to landscape mode.
   </div>
 
-  <div class="progress-label" id="progressLabel">0 of 5 parts completed</div>
+  <div class="progress-label" id="progressLabel">0 of 8 parts completed</div>
   <div class="progress-bar-container">
     <div class="progress-bar-fill" id="progressFill" style="width: 0%;"></div>
   </div>
@@ -235,84 +247,170 @@ body { font-family: Calibri, 'Trebuchet MS', sans-serif; background: #F0F3F5; co
 </div>
 
 <script>
+// 8 parts in display order. Each tracks completion via a `donePredicate` that
+// inspects the localStorage keys written by that part's HTML file.
 var parts = [
   {
-    id: "part1",
-    title: "Start Here: The Mock Article",
-    desc: "Read a realistic journal article excerpt, enter your name, and rate your confidence.",
+    id: "part1a",
+    label: "1a",
+    title: "Welcome & Orientation",
+    desc: "Get the lay of the land — what epidemiology is, the four values you'll learn, and how the same data can be read two different ways.",
     time: "~5 min",
-    url: "unit5-part1-mock-article.html"
+    url: "part1a.html",
+    section: "Setup",
+    donePredicate: function() {
+      // Part 1a unlocks Part 1b once the student has viewed both lenses.
+      // We can't directly observe that, but if the student has progressed
+      // to a Part 1b state (entered name OR baseline ratings), 1a is done.
+      return !!localStorage.getItem("unit5_student_name")
+          || !!localStorage.getItem("unit5_baseline_confidence")
+          || !!localStorage.getItem("unit5_part1a_done");
+    }
+  },
+  {
+    id: "part1b",
+    label: "1b",
+    title: "Mock Article & Confidence Check",
+    desc: "Enter your name, read the mock journal article, and rate your starting confidence on each of the four statistics.",
+    time: "~7 min",
+    url: "part1b.html",
+    donePredicate: function() {
+      var name = localStorage.getItem("unit5_student_name") || "";
+      var baseline = localStorage.getItem("unit5_baseline_confidence");
+      if (!name || name.trim().length < 2) return false;
+      if (!baseline) return false;
+      try {
+        var parsed = JSON.parse(baseline);
+        return parsed && parsed.rr != null && parsed.arr != null
+            && parsed.nnt != null && parsed.or != null;
+      } catch (e) { return false; }
+    }
   },
   {
     id: "part2",
-    title: "How do researchers turn a 2\u00D72 table into epidemiological values?",
-    desc: "Explore which cells each statistic uses and verify the article\u2019s numbers yourself.",
-    time: "~7 min",
-    url: "unit5-part2-two-by-two.html"
+    label: "2",
+    title: "Relative Risk (RR)",
+    desc: "Walk through what RR means, how to read its CI, and why RR alone isn't enough.",
+    time: "~10 min",
+    url: "part2.html",
+    section: "The Four Statistics",
+    donePredicate: function() {
+      return localStorage.getItem("unit5_part2_done") === "1";
+    }
   },
   {
     id: "part3",
-    title: "What\u2019s the difference between relative risk, absolute risk, and NNT?",
-    desc: "Move sliders and discover why the same RR can tell completely different clinical stories.",
+    label: "3",
+    title: "Absolute Risk Reduction (ARR)",
+    desc: "Learn the absolute difference behind RR — and why two studies with the same RR can have wildly different clinical impact.",
     time: "~10 min",
-    url: "unit5-part3-rr-arr-nnt.html"
+    url: "part3.html",
+    donePredicate: function() {
+      return localStorage.getItem("unit5_part3_done") === "1";
+    }
   },
   {
     id: "part4",
-    title: "What is an odds ratio and when does it diverge from relative risk?",
-    desc: "Compare OR and RR side by side and learn the rare disease assumption.",
-    time: "~7 min",
-    url: "unit5-part4-odds-ratio.html"
+    label: "4",
+    title: "Number Needed to Treat (NNT)",
+    desc: "Translate ARR into the most patient-friendly statistic — how many patients you need to treat to prevent one case.",
+    time: "~10 min",
+    url: "part4.html",
+    donePredicate: function() {
+      return localStorage.getItem("unit5_part4_done") === "1";
+    }
   },
   {
     id: "part5",
-    title: "Putting It All Together",
-    desc: "Work through complete clinical scenarios, re-rate your confidence, and download your certificate.",
+    label: "5",
+    title: "Odds Ratio (OR)",
+    desc: "See how OR is calculated, when it approximates RR, and the common misreading that overstates effect size.",
     time: "~10 min",
-    url: "unit5-part5-putting-it-together.html"
+    url: "part5.html",
+    donePredicate: function() {
+      return localStorage.getItem("unit5_part5_done") === "1";
+    }
+  },
+  {
+    id: "part6",
+    label: "6",
+    title: "Apply It — A New Article in OT",
+    desc: "Read a real-world OT cohort study and use all four statistics together. RR > 1, ARI, NNH, mixed CIs.",
+    time: "~12 min",
+    url: "part6.html",
+    section: "Synthesis",
+    donePredicate: function() {
+      return localStorage.getItem("unit5_part6_done") === "1";
+    }
+  },
+  {
+    id: "part7",
+    label: "7",
+    title: "Reflection & Certificate",
+    desc: "Re-rate your confidence, see how far you've come, write a short reflection, and download your completion certificate.",
+    time: "~7 min",
+    url: "part7.html",
+    donePredicate: function() {
+      // Considered done once the student has post-ratings AND has clicked print
+      return localStorage.getItem("unit5_cert_printed") === "1";
+    }
   }
 ];
 
-function getCompleted() {
+function getCompletedIndices() {
   var c = [];
   for (var i = 0; i < parts.length; i++) {
-    if (sessionStorage.getItem("u5_" + parts[i].id + "_done") === "true") {
-      c.push(i);
-    }
+    try {
+      if (parts[i].donePredicate()) c.push(i);
+    } catch (e) {}
   }
   return c;
 }
 
 function render() {
-  var completed = getCompleted();
+  var completed = getCompletedIndices();
   var count = completed.length;
-  var nextAvailable = 0;
-  // Find first incomplete part
-  for (var i = 0; i < parts.length; i++) {
+  var total = parts.length;
+
+  // Find first incomplete part to mark as "Next"
+  var nextAvailable = total; // default: all done
+  for (var i = 0; i < total; i++) {
     if (completed.indexOf(i) === -1) { nextAvailable = i; break; }
-    if (i === parts.length - 1) nextAvailable = parts.length; // all done
   }
 
-  document.getElementById("progressLabel").textContent = count + " of 5 parts completed";
-  document.getElementById("progressFill").style.width = (count / 5 * 100) + "%";
+  document.getElementById("progressLabel").textContent = count + " of " + total + " parts completed";
+  document.getElementById("progressFill").style.width = (count / total * 100) + "%";
 
   var html = "";
-  for (var i = 0; i < parts.length; i++) {
+  var lastSection = null;
+  for (var i = 0; i < total; i++) {
     var p = parts[i];
+
+    // Section header if this part starts a new section
+    if (p.section && p.section !== lastSection) {
+      html += '<div class="section-heading">' + p.section + '</div>';
+      lastSection = p.section;
+    }
+
     var isDone = completed.indexOf(i) !== -1;
     var isNext = (i === nextAvailable);
+    // A card is clickable if it's done (re-visit) OR if it's the next one OR if any earlier
+    // part has been started (graceful — students can navigate back). To keep the original
+    // gating behavior, we only allow done + next.
     var isAvail = isDone || isNext;
 
     var cardClass = isDone ? "completed" : (isAvail ? "available" : "locked");
     var statusText = isDone ? "\u2713 Done" : (isNext ? "Start \u2192" : "Locked");
     var statusClass = isDone ? "done" : (isNext ? "next" : "lock");
 
+    var numberDisplay = isDone ? "\u2713" : p.label;
+
     html += '<a class="part-card ' + cardClass + '"' +
             (isAvail ? ' href="' + p.url + '"' : '') +
             ' title="' + (isAvail ? p.title : 'Complete previous parts first') + '">' +
-            '<div class="part-number">' + (isDone ? "\u2713" : (i + 1)) + '</div>' +
+            '<div class="part-number">' + numberDisplay + '</div>' +
             '<div class="part-content">' +
-            '<div class="part-title">' + p.title + '</div>' +
+            '<div class="part-title">Part ' + p.label + ': ' + p.title + '</div>' +
             '<div class="part-desc">' + p.desc + '</div>' +
             '</div>' +
             '<div style="text-align:right;">' +
@@ -325,18 +423,40 @@ function render() {
 }
 
 function resetProgress() {
-  if (!confirm("This will erase all your progress, ratings, and answers. Are you sure?")) return;
-  for (var i = 0; i < parts.length; i++) {
-    sessionStorage.removeItem("u5_" + parts[i].id + "_done");
+  if (!confirm("This will erase ALL of your saved data on this device, including:\n\n" +
+               "\u2022 Your name\n" +
+               "\u2022 Baseline and post-activity confidence ratings\n" +
+               "\u2022 Your reflection\n" +
+               "\u2022 Part-by-part progress markers\n" +
+               "\u2022 Cert-print history\n\n" +
+               "Are you sure?")) return;
+  // Activity-wide data
+  var keysToRemove = [
+    "unit5_student_name",
+    "unit5_baseline_confidence",
+    "unit5_post_confidence",
+    "unit5_reflection",
+    "unit5_cert_printed",
+    "unit5_cert_first_print_date",
+    "unit5_name_locked",
+    "unit5_part1a_done",
+    "unit5_part2_done",
+    "unit5_part3_done",
+    "unit5_part4_done",
+    "unit5_part5_done",
+    "unit5_part6_done"
+  ];
+  for (var i = 0; i < keysToRemove.length; i++) {
+    try { localStorage.removeItem(keysToRemove[i]); } catch (e) {}
   }
-  sessionStorage.removeItem("u5_name");
-  sessionStorage.removeItem("u5_pre_ratings");
-  sessionStorage.removeItem("u5_post_ratings");
-  sessionStorage.removeItem("u5_answers");
   render();
 }
 
 render();
+
+// Re-render when the user returns to this tab (so progress reflects work done in part pages)
+window.addEventListener("focus", render);
+window.addEventListener("storage", render);
 </script>
 
 <script data-goatcounter="https://professoratx.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>

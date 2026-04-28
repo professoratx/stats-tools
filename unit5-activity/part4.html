@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 5 Activity — Part 4: Number Needed to Treat</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Calibri, "Segoe UI", Tahoma, sans-serif;
+    background: #F0F3F5;
+    color: #172940;
+    line-height: 1.55;
+    min-height: 100vh;
+    font-size: 16.5px;
+  }
+  .header {
+    background: #172940; color: white; padding: 18px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 4px solid #2E8FAF;
+  }
+  .header-left { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .header h1 { font-size: 23px; font-weight: 700; }
+  .header .part-label {
+    font-size: 13.5px; color: #FFC857; text-transform: uppercase;
+    letter-spacing: 1.5px; font-weight: 600;
+  }
+  .progress-pill {
+    background: rgba(255,255,255,0.12); padding: 6px 14px;
+    border-radius: 20px; font-size: 13.5px; color: #F0F3F5;
+  }
+  .progress-pill strong { color: #FFC857; }
+
+  .container {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    padding: 24px 32px 60px; max-width: 1500px; margin: 0 auto;
+  }
+
+  .left-panel {
+    background: white; border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08);
+    padding: 26px 26px 22px; position: sticky; top: 24px;
+    height: fit-content; max-height: calc(100vh - 48px); overflow-y: auto;
+  }
+  .left-panel h2 { font-size: 19px; color: #172940; margin-bottom: 4px; font-weight: 700; }
+  .left-panel .subtitle { color: #616467; font-size: 14px; margin-bottom: 18px; }
+  .panel-section-label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: #2E8FAF; font-weight: 700; margin-bottom: 8px; margin-top: 18px;
+  }
+
+  .contingency {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    font-size: 14px; margin-bottom: 6px;
+  }
+  .contingency th, .contingency td {
+    padding: 11px 8px; text-align: center; border: 1px solid #d8dde2;
+  }
+  .contingency th { background: #172940; color: white; font-weight: 600; font-size: 12.5px; }
+  .contingency th:first-child { background: transparent; border: none; }
+  .contingency .row-label {
+    background: #2E8FAF; color: white; font-weight: 600;
+    text-align: left; padding: 11px 10px; font-size: 13px;
+  }
+  .contingency .group-total { background: #F0F3F5; font-weight: 700; color: #172940; }
+  .contingency .cell-loss { background: #FBEAE7; font-weight: 700; font-size: 18px; color: #8B2B1F; }
+  .contingency .cell-no { background: #E8F4EC; font-weight: 700; font-size: 18px; color: #1B5E3F; }
+  .table-caption { text-align: center; color: #616467; font-size: 12px; margin-top: 4px; font-style: italic; }
+
+  .sliders {
+    background: #F8FAFB; border: 1px solid #d8dde2; border-radius: 10px;
+    padding: 14px 16px; margin-top: 14px; position: relative;
+    transition: opacity 0.3s ease;
+  }
+  .sliders.locked { opacity: 0.55; pointer-events: none; }
+  .sliders-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .sliders-header .s-title { font-size: 13px; font-weight: 700; color: #172940; text-transform: uppercase; letter-spacing: 0.8px; }
+  .reset-btn {
+    background: white; border: 1.5px solid #2E8FAF; color: #2E8FAF;
+    padding: 4px 10px; border-radius: 5px; font-size: 12px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .reset-btn:hover { background: #EAF3F7; }
+  .lock-overlay { position: absolute; top: 6px; right: 12px; font-size: 12px; color: #8B9098; font-style: italic; }
+  .sliders.locked .lock-overlay { display: block; }
+  .sliders:not(.locked) .lock-overlay { display: none; }
+
+  .slider-row { display: grid; grid-template-columns: 130px 1fr 50px; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .slider-row:last-of-type { margin-bottom: 0; }
+  .slider-row .s-label { font-size: 13px; font-weight: 600; color: #172940; }
+  .slider-row .s-label.earplugs { color: #246F89; }
+  .slider-row .s-label.control { color: #8B2B1F; }
+  .slider-row input[type="range"] { width: 100%; accent-color: #2E8FAF; }
+  .slider-row .s-value { text-align: right; font-size: 13.5px; font-weight: 700; color: #172940; font-variant-numeric: tabular-nums; }
+
+  .derived-panel {
+    background: #F8FAFB; border: 1px solid #d8dde2; border-radius: 10px;
+    padding: 14px 16px; margin-top: 14px;
+  }
+  .derived-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 14px; }
+  .derived-row + .derived-row { border-top: 1px dashed #d8dde2; }
+  .derived-row .d-label { color: #616467; font-weight: 600; }
+  .derived-row .d-value { font-weight: 700; color: #172940; font-size: 16px; font-variant-numeric: tabular-nums; }
+
+  .stat-card {
+    border: 2px solid #2E8FAF; border-radius: 10px; padding: 18px 20px;
+    text-align: center; cursor: pointer; transition: all 0.25s ease;
+    background: white; user-select: none; margin-top: 16px;
+  }
+  .stat-card.locked { background: #F0F3F5; border-style: dashed; border-color: #b8c2c8; }
+  .stat-card.locked:hover { background: #E8EDF0; border-color: #2E8FAF; transform: translateY(-1px); }
+  .stat-card.revealed { background: linear-gradient(135deg, #2E8FAF 0%, #246F89 100%); color: white; border-color: #246F89; cursor: default; }
+  .stat-card .label { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #616467; margin-bottom: 6px; font-weight: 600; }
+  .stat-card.revealed .label { color: #FFC857; }
+  .stat-card .value { font-size: 42px; font-weight: 700; line-height: 1; margin-bottom: 6px; color: #172940; font-variant-numeric: tabular-nums; }
+  .stat-card.revealed .value { color: white; }
+  .stat-card .value-sub { font-size: 13px; color: #616467; margin-top: 2px; font-style: italic; }
+  .stat-card.revealed .value-sub { color: #F0F3F5; }
+  .stat-card .hint { font-size: 13px; color: #2E8FAF; font-weight: 600; margin-top: 6px; }
+  .stat-card.revealed .hint { display: none; }
+  .stat-card .formula {
+    font-size: 13.5px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.25);
+    font-family: "Cambria Math", Cambria, serif; color: #F0F3F5; display: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card.revealed .formula { display: block; }
+
+  .nnt-visual-wrap {
+    margin-top: 16px; background: white; border: 1px solid #d8dde2; border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .nnt-visual-title { font-size: 13px; font-weight: 700; color: #172940; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; text-align: center; }
+  .nnt-grid {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center;
+    background: #F8FAFB; border-radius: 8px; padding: 14px; margin-bottom: 12px; min-height: 100px;
+  }
+  .person-icon { width: 30px; height: 36px; flex-shrink: 0; }
+  .person-icon.fitted { fill: #2E8FAF; }
+  .person-icon.prevented { fill: #FFC857; stroke: #8B6914; stroke-width: 2; }
+  .nnt-equals { font-size: 22px; font-weight: 700; color: #172940; margin: 0 6px; }
+  .nnt-readout { text-align: center; font-size: 14px; color: #172940; line-height: 1.5; }
+  .nnt-readout .big { font-weight: 700; font-size: 16px; color: #2E8FAF; }
+
+  .step-nnt-explore {
+    background: #F8FAFB; border: 1px solid #d8dde2; border-radius: 10px;
+    padding: 18px 20px; margin: 14px 0;
+  }
+  .step-nnt-instruct { font-size: 13.5px; color: #616467; text-align: center; margin-bottom: 16px; font-style: italic; }
+  .nnt-explore-display { background: white; border-radius: 8px; padding: 14px; margin-bottom: 14px; text-align: center; }
+  .nnt-explore-arr { font-size: 14px; color: #616467; margin-bottom: 8px; }
+  .nnt-explore-arr strong { color: #172940; font-size: 16px; font-variant-numeric: tabular-nums; }
+  .nnt-explore-people {
+    display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;
+    margin-bottom: 12px; min-height: 50px; align-items: center;
+  }
+  .nnt-explore-people .person-icon { width: 22px; height: 28px; }
+  .nnt-explore-result { font-size: 16px; font-weight: 700; color: #172940; line-height: 1.4; }
+  .nnt-explore-result .num { font-size: 28px; color: #2E8FAF; font-variant-numeric: tabular-nums; }
+  .step-arr-slider-row { display: grid; grid-template-columns: 90px 1fr 60px; align-items: center; gap: 10px; }
+  .step-arr-slider-row .label { font-size: 13px; color: #172940; font-weight: 600; }
+  .step-arr-slider-row input[type="range"] { width: 100%; accent-color: #2E8FAF; }
+  .step-arr-slider-row .value { text-align: right; font-weight: 700; color: #172940; font-variant-numeric: tabular-nums; }
+  .nnt-prompt-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .nnt-prompt-btn {
+    background: white; border: 2px solid #d8dde2; color: #172940;
+    padding: 10px 8px; border-radius: 6px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.18s ease; line-height: 1.3;
+  }
+  .nnt-prompt-btn:hover { border-color: #2E8FAF; background: #EAF3F7; }
+  .nnt-prompt-btn.visited { background: #E8F4EC; border-color: #2D8B5A; color: #1B5E3F; }
+  .nnt-prompt-btn.visited::before { content: "✓ "; color: #2D8B5A; }
+
+  .clusters-wrap { background: #F8FAFB; border: 1px solid #d8dde2; border-radius: 10px; padding: 16px 18px; margin: 14px 0; }
+  .clusters-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px 8px; margin: 12px 0; }
+  .cluster { background: white; border-radius: 6px; padding: 8px 4px; border: 1px solid #d8dde2; text-align: center; }
+  .cluster-people { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; margin-bottom: 4px; }
+  .cluster-people .person-icon { width: 14px; height: 18px; }
+  .cluster-label { font-size: 10.5px; color: #616467; font-weight: 600; }
+  .cluster.has-prevention { border-color: #E5B143; background: #FFF8E1; }
+  .clusters-summary { text-align: center; font-size: 14.5px; color: #172940; font-weight: 600; margin-top: 12px; }
+  .clusters-summary strong { color: #8B6914; font-size: 17px; }
+
+  .right-panel { display: flex; flex-direction: column; gap: 18px; }
+
+  .step {
+    background: white; border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08);
+    padding: 24px 26px; border-left: 5px solid #2E8FAF;
+  }
+  .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .step-number {
+    background: #2E8FAF; color: white; width: 34px; height: 34px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; flex-shrink: 0;
+  }
+  .step-title { font-size: 18.5px; font-weight: 700; color: #172940; }
+  .step-body { color: #2c3e50; font-size: 16px; line-height: 1.7; }
+  .step-body p { margin-bottom: 12px; }
+  .step-body p:last-child { margin-bottom: 0; }
+  .step-body strong { color: #172940; }
+
+  .article-excerpt {
+    background: #F8FAFB; border: 1px solid #d8dde2; border-left: 4px solid #172940;
+    border-radius: 6px; padding: 18px 22px; margin: 14px 0;
+    font-family: Georgia, "Times New Roman", serif; color: #2c3e50; font-size: 15.5px; line-height: 1.75;
+  }
+  .article-excerpt .article-meta { font-size: 12.5px; font-family: Calibri, sans-serif; color: #616467; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .hi-target { background: transparent; transition: background 0.5s ease; padding: 1px 3px; border-radius: 2px; }
+  .hi-target.on { background: #FFE9A6; }
+  .hi-target.on-2 { background: #C9E4D5; }
+  .hi-target.on-3 { background: #F4C7C2; }
+
+  .reveal-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .reveal-btn {
+    background: white; color: #2E8FAF; border: 2px solid #2E8FAF;
+    padding: 9px 16px; border-radius: 7px; font-size: 13.5px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: all 0.18s ease;
+  }
+  .reveal-btn:hover { background: #EAF3F7; transform: translateY(-1px); }
+  .reveal-btn.done { background: #246F89; color: white; border-color: #246F89; cursor: default; }
+  .reveal-btn.done:hover { transform: none; }
+
+  .annot-line {
+    margin-top: 10px; padding: 11px 16px; background: #fff;
+    border-radius: 6px; border-left: 3px solid #FFC857;
+    font-family: Calibri, sans-serif; font-size: 14.5px; color: #172940;
+    display: none; animation: fadeIn 0.4s ease-out; line-height: 1.55;
+  }
+  .annot-line.show { display: block; }
+  .annot-line .a-tag {
+    display: inline-block; font-weight: 700; color: #2E8FAF; margin-right: 6px;
+    text-transform: uppercase; font-size: 11.5px; letter-spacing: 1px;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .calc-box {
+    background: #F8FAFB; border-radius: 10px; border: 1px solid #d8dde2;
+    padding: 20px 22px; margin: 14px 0; text-align: center;
+    font-family: "Cambria Math", Cambria, serif; font-size: 20px; color: #172940;
+  }
+  .calc-box .calc-step { margin: 6px 0; transition: opacity 0.4s ease; }
+  .calc-box .calc-result {
+    color: #2E8FAF; font-weight: 700; font-size: 24px;
+    opacity: 0; transition: opacity 0.6s ease; display: inline-block;
+  }
+  .calc-box .calc-result.show { opacity: 1; }
+  .calc-box .calc-action { margin-top: 12px; }
+  .calc-cursor { display: inline-block; width: 10px; color: #2E8FAF; animation: blink 1s infinite; }
+  @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+  .so-what {
+    background: #FFF8E1; border: 1px solid #F4D77A; border-radius: 8px;
+    padding: 15px 19px; margin-top: 12px;
+  }
+  .so-what .sw-label { color: #8B6914; font-weight: 700; font-size: 12.5px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .so-what p { color: #5a4a10; font-size: 15.5px; line-height: 1.6; margin: 0; }
+
+  .mc-block {
+    background: white; border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(23, 41, 64, 0.08);
+    padding: 24px 26px; border-top: 5px solid #FFC857;
+    opacity: 0.45; pointer-events: none; transition: opacity 0.4s ease;
+  }
+  .mc-block.unlocked { opacity: 1; pointer-events: auto; }
+  .mc-question { font-size: 17px; font-weight: 700; color: #172940; margin-bottom: 14px; line-height: 1.5; }
+  .mc-question .q-num { color: #2E8FAF; margin-right: 6px; }
+  .mc-options { display: flex; flex-direction: column; gap: 10px; }
+  .mc-option {
+    background: #F8FAFB; border: 2px solid #d8dde2; border-radius: 8px;
+    padding: 13px 17px; cursor: pointer; font-size: 15.5px;
+    color: #2c3e50; text-align: left; transition: all 0.18s ease;
+    font-family: inherit; width: 100%; line-height: 1.55;
+  }
+  .mc-option:hover:not(:disabled) { border-color: #2E8FAF; background: #EAF3F7; }
+  .mc-option:disabled { cursor: default; }
+  .mc-option.selected-correct { background: #E8F4EC; border-color: #2D8B5A; color: #1B5E3F; font-weight: 600; }
+  .mc-option.selected-wrong { background: #FBEAE7; border-color: #C0504D; color: #8B2B1F; }
+  .mc-option.show-correct { background: #E8F4EC; border-color: #2D8B5A; color: #1B5E3F; font-weight: 600; }
+  .mc-option .marker { display: inline-block; font-weight: 700; margin-right: 8px; color: #2E8FAF; }
+  .mc-feedback { margin-top: 14px; padding: 15px 17px; border-radius: 8px; font-size: 15px; line-height: 1.6; display: none; }
+  .mc-feedback.correct { background: #E8F4EC; border-left: 4px solid #2D8B5A; color: #1B5E3F; display: block; }
+  .mc-feedback.incorrect { background: #FBEAE7; border-left: 4px solid #C0504D; color: #8B2B1F; display: block; }
+  .mc-feedback strong { display: block; margin-bottom: 4px; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .explore-prompt {
+    background: #FFF8E1; border: 1px solid #F4D77A; border-radius: 8px;
+    padding: 13px 17px; margin-bottom: 14px;
+    font-size: 15px; color: #5a4a10; line-height: 1.55;
+  }
+  .explore-prompt strong { color: #172940; }
+  .explore-prompt .e-label { color: #8B6914; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; display: block; }
+
+  .takeaways {
+    background: #172940; color: white; border-radius: 12px;
+    padding: 28px 30px; border-left: 5px solid #FFC857;
+  }
+  .takeaways h3 { color: #FFC857; font-size: 13.5px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; font-weight: 700; }
+  .takeaways h2 { font-size: 23px; color: white; margin-bottom: 18px; font-weight: 700; }
+  .takeaways ul { list-style: none; padding: 0; margin: 0; }
+  .takeaways li { padding: 13px 0 13px 38px; border-bottom: 1px solid rgba(255,255,255,0.12); position: relative; font-size: 15.5px; line-height: 1.65; color: #F0F3F5; }
+  .takeaways li:last-child { border-bottom: none; }
+  .takeaways li::before {
+    content: "✓"; position: absolute; left: 0; top: 13px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #FFC857; color: #172940; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 13.5px;
+  }
+  .takeaways li strong { color: white; }
+
+  .nav-bar { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 18px 0 0; margin-top: 8px; }
+  .nav-btn {
+    background: #2E8FAF; color: white; border: none;
+    padding: 14px 30px; border-radius: 8px; font-size: 15.5px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: all 0.2s ease; text-decoration: none; display: inline-block;
+  }
+  .nav-btn:hover { background: #246F89; transform: translateY(-1px); }
+  .nav-btn.secondary { background: white; color: #2E8FAF; border: 2px solid #2E8FAF; }
+  .nav-btn.secondary:hover { background: #EAF3F7; }
+  .completion-msg { color: #2D8B5A; font-size: 14.5px; font-weight: 600; text-align: center; flex-grow: 1; margin: 0 20px; }
+
+  @media (max-width: 1100px) { .container { grid-template-columns: 1fr; } .left-panel { position: relative; top: auto; max-height: none; } }
+  @media (max-width: 600px) { .header { padding: 14px 18px; flex-direction: column; gap: 8px; align-items: flex-start; } .container { padding: 16px; } .clusters-grid { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <h1>Unit 5: Epidemiology Activity</h1>
+    <span class="part-label">Part 4 of 7 · Number Needed to Treat</span>
+  </div>
+  <div class="progress-pill">Step <strong id="step-counter">1</strong> of 6</div>
+</header>
+
+<main class="container">
+
+  <aside class="left-panel">
+    <h2>The article's data</h2>
+    <p class="subtitle">Custom musician earplugs vs. no protection · n = 200</p>
+
+    <table class="contingency">
+      <thead>
+        <tr><th></th><th>Developed hearing loss</th><th>No hearing loss</th><th>Total</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="row-label">Custom earplugs</td><td class="cell-loss" id="cell-ep-loss">25</td><td class="cell-no" id="cell-ep-no">75</td><td class="group-total">100</td></tr>
+        <tr><td class="row-label">No protection</td><td class="cell-loss" id="cell-ctrl-loss">55</td><td class="cell-no" id="cell-ctrl-no">45</td><td class="group-total">100</td></tr>
+      </tbody>
+    </table>
+    <p class="table-caption">Outcome at 24 months · Patients with measurable ≥15 dB threshold shift</p>
+
+    <div class="sliders locked" id="sliders-box">
+      <div class="lock-overlay">🔒 Unlocks at Step 6</div>
+      <div class="sliders-header">
+        <span class="s-title">Live exploration</span>
+        <button class="reset-btn" onclick="resetSliders()">Reset</button>
+      </div>
+      <div class="slider-row">
+        <span class="s-label earplugs">Earplugs % w/ loss</span>
+        <input type="range" id="slider-earplugs" min="0" max="100" value="25" step="1" oninput="onSliderChange()">
+        <span class="s-value" id="slider-earplugs-val">25%</span>
+      </div>
+      <div class="slider-row">
+        <span class="s-label control">No protection % w/ loss</span>
+        <input type="range" id="slider-control" min="0" max="100" value="55" step="1" oninput="onSliderChange()">
+        <span class="s-value" id="slider-control-val">55%</span>
+      </div>
+    </div>
+
+    <div class="panel-section-label">Derived from the data</div>
+    <div class="derived-panel">
+      <div class="derived-row"><span class="d-label">Risk in earplugs group</span><span class="d-value" id="d-risk-ep">25%</span></div>
+      <div class="derived-row"><span class="d-label">Risk in no-protection group</span><span class="d-value" id="d-risk-ctrl">55%</span></div>
+      <div class="derived-row"><span class="d-label">ARR (from Part 3)</span><span class="d-value" id="d-arr">30 pp</span></div>
+    </div>
+
+    <div class="panel-section-label">Calculated statistic</div>
+    <div id="nnt-card" class="stat-card locked" onclick="revealNNT()">
+      <div class="label">Number Needed to Treat</div>
+      <div class="value" id="nnt-value">?</div>
+      <div class="value-sub" id="nnt-value-sub">to prevent one case</div>
+      <div class="hint">▸ Click to reveal the value</div>
+      <div class="formula" id="nnt-formula">NNT = 1 / 0.30 = 3.33 → round up to 4</div>
+    </div>
+
+    <div class="nnt-visual-wrap" id="nnt-visual-wrap" style="display:none;">
+      <div class="nnt-visual-title">What NNT means visually</div>
+      <div class="nnt-grid" id="nnt-grid"></div>
+      <div class="nnt-readout" id="nnt-readout">
+        Fit <span class="big">4</span> patients with earplugs<br>to prevent <span class="big">1</span> case of measurable hearing loss
+      </div>
+    </div>
+
+  </aside>
+
+  <section class="right-panel">
+
+    <div class="step" style="border-left-color:#FFC857; background: #172940;">
+      <div class="step-header">
+        <div class="step-number" style="background:#FFC857; color:#172940;">★</div>
+        <div class="step-title" style="color: white;">Orientation</div>
+      </div>
+      <div class="step-body" style="color: #F0F3F5;">
+        <p>In Part 3 you saw that <strong style="color:#FFC857;">ARR</strong> tells you how many fewer patients per 100 will have the outcome. <strong style="color:#FFC857;">NNT</strong> takes that number and flips it on its head — telling you how many patients you'd need to <em>treat</em> to prevent <em>one</em> case. It's the most directly clinical of the four numbers, and the one your patients will most easily understand.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-number">1</div><div class="step-title">Find the key pieces in the article</div></div>
+      <div class="step-body">
+        <p>Here's the next sentence from the same study. Click each button to spotlight a piece.</p>
+        <div class="article-excerpt">
+          <div class="article-meta">From the Discussion section</div>
+          On the basis of the observed reduction, <span class="hi-target" id="hi-1">approximately 4 young adults would need to be fitted with custom earplugs to prevent one additional case of measurable hearing loss</span> over 24 months (<span class="hi-target" id="hi-2">NNT = 4</span>, <span class="hi-target" id="hi-3">95% CI [3, 6]</span>).
+        </div>
+        <div class="reveal-row">
+          <button class="reveal-btn" id="hi-btn-1" onclick="highlight(1)">① Spotlight the claim</button>
+          <button class="reveal-btn" id="hi-btn-2" onclick="highlight(2)">② Spotlight the NNT value</button>
+          <button class="reveal-btn" id="hi-btn-3" onclick="highlight(3)">③ Spotlight the CI</button>
+        </div>
+        <div class="annot-line" id="annot-1"><span class="a-tag">The claim</span>"4 young adults would need to be fitted to prevent one additional case." This is plain-language clinical math — exactly the framing patients understand.</div>
+        <div class="annot-line" id="annot-2"><span class="a-tag">NNT = 4</span>NNT is reported as a whole number — usually rounded up. The exact calculation gives 3.33; we round to 4 because you can't fit 3.33 patients with earplugs.</div>
+        <div class="annot-line" id="annot-3"><span class="a-tag">CI [3, 6]</span>The CI for NNT is also reported as whole numbers. Plausibly, the true number you'd need to fit ranges from 3 to 6. Smaller is better — fewer patients fitted to prevent one case = more efficient intervention.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-number">2</div><div class="step-title">NNT is the inverse of ARR</div></div>
+      <div class="step-body">
+        <p>Here's the link: <strong>NNT = 1 ÷ ARR</strong> (where ARR is in proportion form, not percentage points). The smaller the ARR, the larger the NNT — you need to treat more patients to prevent one case. Drag the slider to see this relationship in action.</p>
+
+        <div class="step-nnt-explore">
+          <div class="step-nnt-instruct">Drag the ARR slider — watch how many patients you need to treat to prevent one case</div>
+
+          <div class="nnt-explore-display">
+            <div class="nnt-explore-arr">If ARR = <strong id="step2-arr-display">30 pp</strong> (or 0.30 as a proportion)</div>
+            <div class="nnt-explore-people" id="step2-people"></div>
+            <div class="nnt-explore-result">
+              You'd need to treat <span class="num" id="step2-nnt">4</span> patients to prevent 1 case
+            </div>
+          </div>
+
+          <div class="step-arr-slider-row">
+            <span class="label">ARR (pp)</span>
+            <input type="range" id="step2-arr-slider" min="1" max="80" value="30" step="1" oninput="updateStep2()">
+            <span class="value" id="step2-arr-val">30</span>
+          </div>
+
+          <div class="nnt-prompt-buttons">
+            <button class="nnt-prompt-btn" id="prompt-btn-strong" onclick="step2Prompt('strong')">Strong effect<br>(ARR = 50 pp)</button>
+            <button class="nnt-prompt-btn" id="prompt-btn-modest" onclick="step2Prompt('modest')">Modest effect<br>(ARR = 10 pp)</button>
+            <button class="nnt-prompt-btn" id="prompt-btn-tiny" onclick="step2Prompt('tiny')">Tiny effect<br>(ARR = 2 pp)</button>
+          </div>
+        </div>
+
+        <p>Notice the pattern: <strong>smaller NNT = stronger intervention</strong>. NNT = 2 means you only need to treat 2 patients to spare 1 case — that's a powerful intervention. NNT = 50 means you'd need to treat 50 patients to spare 1 — still real, but each individual patient has a much smaller chance of personally benefiting.</p>
+        <p>And as ARR approaches 0, NNT shoots toward infinity — when there's no real effect, no number of patients treated will reliably prevent the outcome.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-number">3</div><div class="step-title">See it visually — clusters of patients</div></div>
+      <div class="step-body">
+        <p>Here are 100 patients fitted with custom earplugs, grouped into clusters of 4 (because NNT = 4). Click the button to mark the patients spared by earplugs — one per cluster, on average.</p>
+
+        <div class="clusters-wrap">
+          <div class="clusters-grid" id="clusters-grid"></div>
+          <div style="text-align:center; margin-top: 8px;">
+            <button class="reveal-btn" id="clusters-btn" onclick="markClusters()">▸ Mark the patients spared by earplugs</button>
+          </div>
+          <div class="clusters-summary" id="clusters-summary" style="display:none;">
+            <strong>~25 clusters of 4 patients</strong>, each cluster contributing about <strong>1 case prevented</strong>. That's the visual logic of NNT = 4.
+          </div>
+        </div>
+
+        <p>NNT distills the entire study into a single, hand-sized number you can quote at the bedside: "fit four patients, save one case." It's why physicians and clinicians often reach for NNT first when explaining a treatment's value.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-number">4</div><div class="step-title">Compute and round, then click the card</div></div>
+      <div class="step-body">
+        <p>The math is one division and a rounding step.</p>
+        <div class="calc-box">
+          <div class="calc-step">NNT = 1 / ARR (as proportion)</div>
+          <div class="calc-step" style="margin-top:10px;">
+            NNT = 1 / 0.30 = 3.33 → round up to <span class="calc-result" id="calc-result">4</span><span class="calc-cursor" id="calc-cursor">|</span>
+          </div>
+          <div class="calc-action">
+            <button class="reveal-btn" id="calc-btn" onclick="showCalcResult()">▸ Show me the answer</button>
+          </div>
+        </div>
+        <p>NNT is <strong>always rounded up</strong>, never down. You can't fit 3.33 patients with earplugs, and rounding down would understate how many you actually need.</p>
+        <p>Now <strong>click the dashed NNT card on the left side</strong> to confirm the value. The card will reveal the visual that shows what 4 patients fitted, 1 case prevented looks like.</p>
+        <div class="so-what">
+          <div class="sw-label">★ So what does NNT = 4 mean?</div>
+          <p>For every <strong>4 young adults</strong> fitted with custom earplugs, one fewer case of measurable hearing loss will occur over 2 years. That's a number you can use in counseling — concrete, actionable, and tied to a specific timeframe and outcome.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-number">5</div><div class="step-title">Four rules to remember when reading any NNT</div></div>
+      <div class="step-body">
+        <p>NNT shows up in clinical guidelines, treatment recommendations, and conversations with patients. These four rules apply across all of them:</p>
+        <p style="padding-left: 14px;">
+          • <strong>Smaller NNT = stronger effect.</strong> NNT = 2 is a powerhouse; NNT = 100 is borderline.<br>
+          • <strong>Always round up.</strong> NNT = 3.33 rounds to 4, not 3 — never understate how many you need to treat.<br>
+          • <strong>NNT depends on baseline risk.</strong> A treatment with the same RR can have very different NNT in different populations.<br>
+          • <strong>Always paired with a timeframe and outcome.</strong> "NNT = 4 over 24 months to prevent measurable hearing loss" — strip those details and the number becomes meaningless.
+        </p>
+        <p>Also: when the intervention causes harm, the related number is <strong>NNH (Number Needed to Harm)</strong>. Same math, opposite direction. You'll see it in any paper that reports adverse events.</p>
+      </div>
+    </div>
+
+    <div class="step" id="step-6">
+      <div class="step-header"><div class="step-number">6</div><div class="step-title">Now explore — change the data and watch the NNT shift</div></div>
+      <div class="step-body">
+        <p>The two sliders on the left panel are now unlocked. As you drag them, the 2×2 table, the derived ARR, and the NNT card will all recalculate in real time. The patient-cluster visual updates too.</p>
+        <p>Use the sliders to answer Q4–Q6 below. There's a <strong>Reset</strong> button on the slider panel to return to the article's original values.</p>
+      </div>
+    </div>
+
+    <div id="mc1-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q1.</span> A patient asks what NNT = 4 means for them. Which response is the most accurate and clear?</div>
+      <div class="mc-options" id="mc1-options">
+        <button class="mc-option" onclick="answerMC(1, 'a', false)"><span class="marker">A.</span> "Out of every 4 young adults, all 4 will be helped by earplugs."</button>
+        <button class="mc-option" onclick="answerMC(1, 'b', true)"><span class="marker">B.</span> "If we fit 4 young adults like you with custom earplugs, on average 1 case of measurable hearing loss will be prevented over 2 years."</button>
+        <button class="mc-option" onclick="answerMC(1, 'c', false)"><span class="marker">C.</span> "You have a 4-in-1 chance of avoiding hearing loss."</button>
+        <button class="mc-option" onclick="answerMC(1, 'd', false)"><span class="marker">D.</span> "Earplugs need to be replaced every 4 months."</button>
+      </div>
+      <div class="mc-feedback" id="mc1-feedback"></div>
+    </div>
+
+    <div id="mc2-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q2.</span> Imagine an article reports NNT = 50 for a different intervention. Compared with NNT = 4, what does this tell you?</div>
+      <div class="mc-options" id="mc2-options">
+        <button class="mc-option" onclick="answerMC(2, 'a', true)"><span class="marker">A.</span> NNT = 50 is a weaker intervention. You'd have to treat 50 patients to prevent one case, instead of just 4. Each individual patient is far less likely to personally benefit.</button>
+        <button class="mc-option" onclick="answerMC(2, 'b', false)"><span class="marker">B.</span> NNT = 50 is a stronger intervention because the number is larger.</button>
+        <button class="mc-option" onclick="answerMC(2, 'c', false)"><span class="marker">C.</span> The two NNTs are clinically equivalent — both prevent one case.</button>
+        <button class="mc-option" onclick="answerMC(2, 'd', false)"><span class="marker">D.</span> NNT = 50 means the intervention is harmful.</button>
+      </div>
+      <div class="mc-feedback" id="mc2-feedback"></div>
+    </div>
+
+    <div id="mc3-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q3.</span> A study reports ARR = 0.05 (5 percentage points). Which of these is the correct NNT?</div>
+      <div class="mc-options" id="mc3-options">
+        <button class="mc-option" onclick="answerMC(3, 'a', false)"><span class="marker">A.</span> NNT = 0.05 — same as the ARR.</button>
+        <button class="mc-option" onclick="answerMC(3, 'b', false)"><span class="marker">B.</span> NNT = 5 — read directly from the percentage points.</button>
+        <button class="mc-option" onclick="answerMC(3, 'c', true)"><span class="marker">C.</span> NNT = 20 — calculated as 1 / 0.05, with no rounding needed because the result is already a whole number.</button>
+        <button class="mc-option" onclick="answerMC(3, 'd', false)"><span class="marker">D.</span> NNT = 19 — round 1/0.05 = 20 down by one.</button>
+      </div>
+      <div class="mc-feedback" id="mc3-feedback"></div>
+    </div>
+
+    <div id="mc4-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q4.</span> Use the sliders on the left to test what happens with a small effect.</div>
+      <div class="explore-prompt">
+        <span class="e-label">▸ Try this on the left panel</span>
+        Set <strong>Earplugs % w/ loss = 50%</strong> and <strong>No protection % w/ loss = 55%</strong>. The earplugs help, but only a little. <strong>What is the new NNT, and what does it tell you?</strong>
+      </div>
+      <div class="mc-options" id="mc4-options">
+        <button class="mc-option" onclick="answerMC(4, 'a', false)"><span class="marker">A.</span> NNT = 4 — same as before, since earplugs always help.</button>
+        <button class="mc-option" onclick="answerMC(4, 'b', false)"><span class="marker">B.</span> NNT = 0.5 — the difference between the groups.</button>
+        <button class="mc-option" onclick="answerMC(4, 'c', false)"><span class="marker">C.</span> NNT = 105 — adding the two values.</button>
+        <button class="mc-option" onclick="answerMC(4, 'd', true)"><span class="marker">D.</span> NNT = 20 — you'd need to fit about 20 patients with earplugs to prevent 1 case. The effect is real but small, so each individual patient has a much smaller chance of personally benefiting.</button>
+      </div>
+      <div class="mc-feedback" id="mc4-feedback"></div>
+    </div>
+
+    <div id="mc5-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q5.</span> Now try equal groups.</div>
+      <div class="explore-prompt">
+        <span class="e-label">▸ Try this on the left panel</span>
+        Set <strong>Earplugs % w/ loss = 40%</strong> and <strong>No protection % w/ loss = 40%</strong>. Both groups now have the same risk. <strong>What does NNT show, and what does it mean?</strong>
+      </div>
+      <div class="mc-options" id="mc5-options">
+        <button class="mc-option" onclick="answerMC(5, 'a', true)"><span class="marker">A.</span> NNT is undefined or infinite — when ARR = 0, the formula 1/0 has no real value. There's no number of patients you can treat to prevent a case if the intervention makes no difference.</button>
+        <button class="mc-option" onclick="answerMC(5, 'b', false)"><span class="marker">B.</span> NNT = 1 — when groups match, the number is exactly 1.</button>
+        <button class="mc-option" onclick="answerMC(5, 'c', false)"><span class="marker">C.</span> NNT = 40 — read directly from the percentage in each group.</button>
+        <button class="mc-option" onclick="answerMC(5, 'd', false)"><span class="marker">D.</span> NNT = 0 — when groups match, no one needs treatment.</button>
+      </div>
+      <div class="mc-feedback" id="mc5-feedback"></div>
+    </div>
+
+    <div id="mc6-block" class="mc-block">
+      <div class="mc-question"><span class="q-num">Q6.</span> The conceptual punch line — same RR, very different NNT.</div>
+      <div class="explore-prompt">
+        <span class="e-label">▸ Try this on the left panel</span>
+        First, set <strong>Earplugs = 5%</strong> and <strong>No protection = 10%</strong>. Note the NNT (you'll see ARR = 5 pp, NNT = 20). Then set <strong>Earplugs = 40%</strong> and <strong>No protection = 80%</strong>. Note the new NNT (ARR = 40 pp, NNT ≈ 3). <strong>Both scenarios have RR = 0.50 — what does this teach you?</strong>
+      </div>
+      <div class="mc-options" id="mc6-options">
+        <button class="mc-option" onclick="answerMC(6, 'a', false)"><span class="marker">A.</span> The two scenarios are clinically identical because the RR is the same.</button>
+        <button class="mc-option" onclick="answerMC(6, 'b', true)"><span class="marker">B.</span> Same RR (0.50 — earplugs halve the risk in both cases) gives very different NNT (20 vs. 3) because baseline risk differs. In the high-risk population, treating 3 people prevents 1 case; in the low-risk population, you'd need 20. This is why NNT is the most clinically actionable of the four numbers.</button>
+        <button class="mc-option" onclick="answerMC(6, 'c', false)"><span class="marker">C.</span> The NNTs are the same because RR is the same.</button>
+        <button class="mc-option" onclick="answerMC(6, 'd', false)"><span class="marker">D.</span> NNT does not depend on baseline risk.</button>
+      </div>
+      <div class="mc-feedback" id="mc6-feedback"></div>
+    </div>
+
+    <div class="takeaways" id="takeaways" style="display:none;">
+      <h3>Big takeaways</h3>
+      <h2>What NNT will tell you in any paper</h2>
+      <ul>
+        <li><strong>NNT is the inverse of ARR.</strong> NNT = 1/ARR (with ARR as a proportion). It tells you how many patients you'd need to treat to prevent one case of the outcome.</li>
+        <li><strong>Smaller NNT = stronger intervention.</strong> NNT = 2 is exceptional; NNT = 100 is a weak effect, even if statistically significant.</li>
+        <li><strong>Always round up.</strong> NNT = 3.33 rounds to 4. You can't fit 3.33 patients with earplugs, and rounding down would underestimate how many you need.</li>
+        <li><strong>NNT depends on baseline risk.</strong> Same RR can give wildly different NNT depending on how high the baseline risk is. The high-risk population gets much more from the same intervention in absolute terms.</li>
+        <li><strong>NNT is the bedside number.</strong> RR and OR are great for understanding magnitude. ARR is great for absolute counts. But NNT is the number you actually quote to a patient: "Fit 4 people with earplugs, prevent 1 hearing loss case." Up next: <em>Odds Ratio</em> — the cousin of RR that shows up in case-control studies and logistic regression.</li>
+      </ul>
+    </div>
+
+    <div class="nav-bar">
+      <a href="part3.html" class="nav-btn secondary">← Back to Part 3</a>
+      <span class="completion-msg" id="completion-msg"></span>
+      <a href="part5.html" class="nav-btn" id="next-btn" style="pointer-events:none; opacity:0.5;">Continue to Part 5 →</a>
+    </div>
+
+  </section>
+</main>
+
+<script>
+  const ORIG = { earplugs: 25, control: 55 };
+  const state = {
+    nntRevealed: false, clustersMarked: false, calcShown: false,
+    answered: { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false },
+    correct:  { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false },
+    highlighted: { 1: false, 2: false, 3: false },
+    step2Visited: { strong: false, modest: false, tiny: false }
+  };
+
+  function personSvg(type) {
+    if (type === 'prevented') {
+      return `<svg class="person-icon prevented" viewBox="0 0 30 36" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="15" cy="8" r="5"/>
+        <path d="M 6 36 L 6 22 Q 6 17 11 17 L 19 17 Q 24 17 24 22 L 24 36 Z"/>
+      </svg>`;
+    }
+    return `<svg class="person-icon fitted" viewBox="0 0 30 36" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="15" cy="8" r="5"/>
+      <path d="M 6 36 L 6 22 Q 6 17 11 17 L 19 17 Q 24 17 24 22 L 24 36 Z"/>
+    </svg>`;
+  }
+
+  function highlight(n) {
+    state.highlighted[n] = true;
+    const cls = n === 1 ? 'on' : (n === 2 ? 'on-2' : 'on-3');
+    document.getElementById('hi-' + n).classList.add(cls);
+    document.getElementById('annot-' + n).classList.add('show');
+    const btn = document.getElementById('hi-btn-' + n);
+    btn.classList.add('done');
+    btn.disabled = true;
+    updateStepCounter();
+  }
+
+  function arrToNnt(arrPct) {
+    if (arrPct <= 0) return Infinity;
+    return Math.ceil(1 / (arrPct / 100));
+  }
+
+  function updateStep2() {
+    const arrPct = parseInt(document.getElementById('step2-arr-slider').value, 10);
+    const nnt = arrToNnt(arrPct);
+
+    document.getElementById('step2-arr-display').textContent = arrPct + ' pp';
+    document.getElementById('step2-arr-val').textContent = arrPct;
+    document.getElementById('step2-nnt').textContent = isFinite(nnt) ? nnt : '∞';
+
+    const peopleDiv = document.getElementById('step2-people');
+    peopleDiv.innerHTML = '';
+
+    if (!isFinite(nnt) || nnt > 60) {
+      peopleDiv.innerHTML = '<span style="color:#616467; font-style:italic; font-size:13px;">Too many patients to display — effect is very small.</span>';
+      return;
+    }
+
+    for (let i = 0; i < nnt - 1; i++) {
+      peopleDiv.innerHTML += personSvg('fitted');
+    }
+    peopleDiv.innerHTML += personSvg('prevented');
+  }
+
+  function step2Prompt(scenario) {
+    let val;
+    if (scenario === 'strong')      val = 50;
+    else if (scenario === 'modest') val = 10;
+    else                             val = 2;
+
+    document.getElementById('step2-arr-slider').value = val;
+    updateStep2();
+
+    const btn = document.getElementById('prompt-btn-' + scenario);
+    btn.classList.add('visited');
+    state.step2Visited[scenario] = true;
+  }
+
+  function buildClusters() {
+    const grid = document.getElementById('clusters-grid');
+    grid.innerHTML = '';
+    for (let c = 0; c < 25; c++) {
+      const cluster = document.createElement('div');
+      cluster.className = 'cluster';
+      cluster.id = 'cluster-' + c;
+      const peopleHtml = '<div class="cluster-people">' +
+        personSvg('fitted') + personSvg('fitted') +
+        personSvg('fitted') + personSvg('fitted') +
+        '</div>';
+      cluster.innerHTML = peopleHtml + '<div class="cluster-label">Cluster ' + (c+1) + '</div>';
+      grid.appendChild(cluster);
+    }
+  }
+
+  function markClusters() {
+    if (state.clustersMarked) return;
+    state.clustersMarked = true;
+    const btn = document.getElementById('clusters-btn');
+    btn.classList.add('done');
+    btn.disabled = true;
+    btn.textContent = '✓ Marked';
+
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= 25) { clearInterval(interval); return; }
+      const cluster = document.getElementById('cluster-' + i);
+      cluster.classList.add('has-prevention');
+      const peopleDiv = cluster.querySelector('.cluster-people');
+      peopleDiv.innerHTML =
+        personSvg('fitted') + personSvg('fitted') +
+        personSvg('fitted') + personSvg('prevented');
+      i++;
+    }, 80);
+
+    setTimeout(() => {
+      document.getElementById('clusters-summary').style.display = 'block';
+    }, 200);
+    updateStepCounter();
+  }
+
+  function showCalcResult() {
+    if (state.calcShown) return;
+    state.calcShown = true;
+    document.getElementById('calc-result').classList.add('show');
+    document.getElementById('calc-cursor').style.display = 'none';
+    const btn = document.getElementById('calc-btn');
+    btn.classList.add('done');
+    btn.disabled = true;
+    btn.textContent = '✓ Shown';
+    updateStepCounter();
+  }
+
+  function revealNNT() {
+    if (state.nntRevealed) return;
+    state.nntRevealed = true;
+    const card = document.getElementById('nnt-card');
+    card.classList.remove('locked');
+    card.classList.add('revealed');
+    document.getElementById('nnt-value').textContent = '4';
+    document.getElementById('nnt-value-sub').textContent = '95% CI [3, 6]';
+
+    document.getElementById('nnt-visual-wrap').style.display = 'block';
+    drawPanelNNT(4);
+
+    updateStepCounter();
+    unlockMC(1);
+  }
+
+  function drawPanelNNT(nnt) {
+    const grid = document.getElementById('nnt-grid');
+    grid.innerHTML = '';
+
+    if (!isFinite(nnt) || nnt > 60) {
+      grid.innerHTML = '<span style="color:#616467; font-style:italic;">Effect too small to display visually.</span>';
+      document.getElementById('nnt-readout').innerHTML = 'NNT is very large (or undefined) — the intervention has little or no effect.';
+      return;
+    }
+
+    for (let i = 0; i < nnt - 1; i++) {
+      grid.innerHTML += personSvg('fitted');
+    }
+    grid.innerHTML += '<span class="nnt-equals">→</span>';
+    grid.innerHTML += personSvg('prevented');
+
+    document.getElementById('nnt-readout').innerHTML =
+      `Fit <span class="big">${nnt}</span> patients with earplugs<br>to prevent <span class="big">1</span> case of measurable hearing loss`;
+  }
+
+  function unlockSliders() {
+    document.getElementById('sliders-box').classList.remove('locked');
+  }
+
+  function onSliderChange() {
+    const ep = parseInt(document.getElementById('slider-earplugs').value, 10);
+    const ctrl = parseInt(document.getElementById('slider-control').value, 10);
+
+    document.getElementById('slider-earplugs-val').textContent = ep + '%';
+    document.getElementById('slider-control-val').textContent = ctrl + '%';
+
+    document.getElementById('cell-ep-loss').textContent = ep;
+    document.getElementById('cell-ep-no').textContent = 100 - ep;
+    document.getElementById('cell-ctrl-loss').textContent = ctrl;
+    document.getElementById('cell-ctrl-no').textContent = 100 - ctrl;
+
+    document.getElementById('d-risk-ep').textContent = ep + '%';
+    document.getElementById('d-risk-ctrl').textContent = ctrl + '%';
+    const arr = ctrl - ep;
+    document.getElementById('d-arr').textContent = (arr >= 0 ? '+' : '') + arr + ' pp';
+
+    let nntValue, nntDisplay, nntFormula, nntSub;
+    if (arr <= 0) {
+      nntDisplay = '—';
+      nntSub = arr === 0 ? 'no difference between groups' : 'treatment harmful (consider NNH)';
+      nntFormula = 'NNT undefined when ARR ≤ 0';
+      nntValue = Infinity;
+    } else {
+      nntValue = Math.ceil(1 / (arr / 100));
+      nntDisplay = nntValue.toString();
+      nntSub = 'to prevent one case';
+      nntFormula = `NNT = 1 / ${(arr/100).toFixed(2)} = ${(1/(arr/100)).toFixed(2)} → round up to ${nntValue}`;
+    }
+    document.getElementById('nnt-value').textContent = nntDisplay;
+    document.getElementById('nnt-value-sub').textContent = nntSub;
+    document.getElementById('nnt-formula').textContent = nntFormula;
+
+    if (state.nntRevealed) drawPanelNNT(nntValue);
+  }
+
+  function resetSliders() {
+    document.getElementById('slider-earplugs').value = ORIG.earplugs;
+    document.getElementById('slider-control').value = ORIG.control;
+    onSliderChange();
+  }
+
+  const feedbackText = {
+    1: {
+      correct: "<strong>Correct.</strong> NNT translates directly into a clinical action: fit 4 patients with earplugs, prevent 1 case. Tying it to the timeframe (24 months) and outcome (measurable hearing loss) keeps the meaning intact for patient counseling.",
+      a: "<strong>Not quite.</strong> NNT doesn't mean every patient is helped. It means that across 4 patients fitted with earplugs, you'd expect about 1 case prevented — the other 3 either wouldn't have developed hearing loss anyway, or would still develop it despite the earplugs.",
+      c: "<strong>Not quite.</strong> '4-in-1 chance' is a confusing fraction that doesn't match what NNT measures. NNT is about treatment efficiency — how many patients to treat to prevent 1 case — not about an individual patient's odds.",
+      d: "<strong>Not quite.</strong> NNT has nothing to do with how often earplugs need to be replaced. It's a statistical measure of treatment efficiency."
+    },
+    2: {
+      correct: "<strong>Correct.</strong> NNT works inversely to its size — the smaller the number, the more efficient the intervention. NNT = 4 means treating 4 patients spares 1 case. NNT = 50 means you'd need to treat 50 to spare 1. The intervention still 'works,' but each individual patient has a much smaller chance of being the one who benefits.",
+      b: "<strong>Not quite.</strong> The opposite is true. Smaller NNT = stronger effect. NNT = 4 means a much more efficient intervention than NNT = 50.",
+      c: "<strong>Not quite.</strong> They are not equivalent — both prevent 1 case in their group of treated patients, but the size of that group differs dramatically. Patient counseling implications are very different for NNT = 4 versus NNT = 50.",
+      d: "<strong>Not quite.</strong> NNT can't tell you the intervention is harmful — for that you'd look at NNH (Number Needed to Harm) or the direction of the ARR. A larger NNT just means a weaker positive effect."
+    },
+    3: {
+      correct: "<strong>Correct.</strong> NNT = 1 / ARR (as proportion). 1 / 0.05 = 20 exactly. No rounding needed when the result is already a whole number. You'd treat 20 patients to prevent 1 case.",
+      a: "<strong>Not quite.</strong> NNT and ARR are inverses, not equal. NNT = 1/ARR, so NNT = 1/0.05 = 20.",
+      b: "<strong>Not quite.</strong> The percentage points number alone isn't the NNT. You have to invert it: NNT = 1 / (5/100) = 1/0.05 = 20.",
+      d: "<strong>Not quite.</strong> NNT is rounded <em>up</em>, never down. And in this case, 1/0.05 = 20 exactly — no rounding is needed at all."
+    },
+    4: {
+      correct: "<strong>Correct.</strong> When earplugs reduce risk from 55% to 50%, ARR = 5 pp = 0.05 as a proportion. NNT = 1 / 0.05 = 20. The effect is real but small, so each individual patient has a much smaller chance of personally benefiting compared to the original NNT = 4.",
+      a: "<strong>Not quite.</strong> NNT = 4 was calculated for ARR = 30 pp. With ARR = 5 pp, the NNT changes — and it gets larger because the effect is smaller.",
+      b: "<strong>Not quite.</strong> 0.5 isn't a valid NNT. You can't fit half a patient with earplugs.",
+      c: "<strong>Not quite.</strong> NNT is calculated by inverting ARR, not by adding the two values."
+    },
+    5: {
+      correct: "<strong>Correct.</strong> When ARR = 0 (the groups have equal risk), the NNT formula gives 1/0, which is mathematically undefined and conceptually infinite. You can't 'prevent' a case if the intervention makes no difference. In published research, you'll see this reported as 'NNT not applicable' or 'NNT not estimable when CI for ARR includes 0.'",
+      b: "<strong>Not quite.</strong> NNT = 1 would mean every patient treated has a case prevented — that's never true unless the intervention is 100% effective in a 0% baseline-risk world.",
+      c: "<strong>Not quite.</strong> Reading NNT directly from a percentage doesn't give you a meaningful answer. NNT requires inverting the ARR, and ARR is zero here.",
+      d: "<strong>Not quite.</strong> NNT = 0 would imply zero patients need treatment — that's not a meaningful clinical statement when the intervention has no effect."
+    },
+    6: {
+      correct: "<strong>Correct — and this is the conceptual punch line of Part 4.</strong> Same RR (earplugs halve the risk), but very different NNT (20 vs. 3). In a high-risk population, the same intervention is more 'efficient' because each patient is more likely to be one of the people who would have developed the outcome. NNT translates the math directly into clinical efficiency, and that efficiency depends on baseline risk. This is exactly why NNT, ARR, and RR each tell you something different — and why you usually want to see all of them when reading a paper.",
+      a: "<strong>Not quite.</strong> Same RR doesn't mean clinically identical. RR captures relative magnitude; NNT captures clinical efficiency. A 'halving' of a 10% risk is much less impactful in absolute terms than a halving of an 80% risk.",
+      c: "<strong>Not quite.</strong> NNT depends on the absolute size of the gap (ARR), not just the relative ratio (RR). Try the slider exercise — the NNT changes dramatically.",
+      d: "<strong>Not quite.</strong> NNT very much depends on baseline risk. The higher the baseline risk in the comparison group, the more efficient the same relative reduction becomes in absolute terms."
+    }
+  };
+
+  function answerMC(qNum, choice, isCorrect) {
+    if (state.answered[qNum]) return;
+    state.answered[qNum] = true;
+    state.correct[qNum] = isCorrect;
+
+    const buttons = document.querySelectorAll('#mc' + qNum + '-options .mc-option');
+    buttons.forEach(btn => { btn.disabled = true; });
+
+    const chosenBtn = Array.from(buttons).find(btn =>
+      btn.getAttribute('onclick').includes("'" + choice + "'")
+    );
+    if (chosenBtn) chosenBtn.classList.add(isCorrect ? 'selected-correct' : 'selected-wrong');
+    if (!isCorrect) {
+      buttons.forEach(btn => {
+        const onClick = btn.getAttribute('onclick');
+        if (onClick.includes('true')) btn.classList.add('show-correct');
+      });
+    }
+
+    const fb = document.getElementById('mc' + qNum + '-feedback');
+    fb.classList.remove('correct', 'incorrect');
+    fb.classList.add(isCorrect ? 'correct' : 'incorrect');
+    fb.innerHTML = isCorrect ? feedbackText[qNum].correct : feedbackText[qNum][choice];
+
+    if (qNum < 6) {
+      unlockMC(qNum + 1);
+      if (qNum === 3) unlockSliders();
+    } else {
+      finalize();
+    }
+    updateStepCounter();
+  }
+
+  function unlockMC(qNum) {
+    const block = document.getElementById('mc' + qNum + '-block');
+    if (block) block.classList.add('unlocked');
+  }
+
+  function finalize() {
+    const allCorrect = state.correct[1] && state.correct[2] && state.correct[3] && state.correct[4] && state.correct[5] && state.correct[6];
+    const msg = document.getElementById('completion-msg');
+    msg.textContent = allCorrect ? '✓ All six correct — excellent work.' : '✓ Section complete. Review feedback as needed.';
+    document.getElementById('takeaways').style.display = 'block';
+    const nextBtn = document.getElementById('next-btn');
+    nextBtn.style.pointerEvents = 'auto';
+    nextBtn.style.opacity = '1';
+  }
+
+  function updateStepCounter() {
+    let step = 1;
+    if (state.highlighted[1] || state.highlighted[2] || state.highlighted[3]) step = 2;
+    if (state.clustersMarked) step = 3;
+    if (state.calcShown) step = 4;
+    if (state.nntRevealed) step = 5;
+    if (state.answered[3]) step = 6;
+    document.getElementById('step-counter').textContent = step;
+  }
+
+  buildClusters();
+  resetSliders();
+  updateStep2();
+</script>
+</body>
+</html>
